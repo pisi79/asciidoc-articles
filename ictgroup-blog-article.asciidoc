@@ -11,7 +11,7 @@ endif::[]
 
 
 
-Il principale stack tecnologico adottato per lo sviluppo in ICT-Group è centrato attorno alle specifiche *JavaEE* (http://www.oracle.com/technetwork/java/javaee/overview/index.html) con l'obiettivo di:
+Il principale stack tecnologico adottato per lo sviluppo in ICT-Group è centrato attorno alle specifiche *Java EE* (http://www.oracle.com/technetwork/java/javaee/overview/index.html) con l'obiettivo di:
 
 - aderire a standard di qualità e compatibilità, quali le Java Specification Request (JSR) promosse dal Java Community Process (JCP)
 - adottare tutte le più recenti tecniche di programmazione, quali l'uso di metacodice (Annotations on Java Types), iniezione di dipendenze (Contexts and Dependency Injection, CDI)
@@ -45,7 +45,7 @@ ifeval::[{code}==1]
 
 .template.hxtml
 ------------------
-  <f:event type="preRenderView"
+	<f:event type="preRenderView"
 		listener="#{permissionController.checkRoles}" />
 
 	<ui:insert name="roles">
