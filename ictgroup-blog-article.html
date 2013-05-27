@@ -740,18 +740,11 @@ asciidoc.install();
 <div id="content">
 <div id="preamble">
 <div class="sectionbody">
-<div class="verseblock">
-<pre class="content">Genera il documento html digitando
-<tt>$ asciidoc -acode=[0|1] article.txt</tt></pre>
-<div class="attribution">
-<em>Istruzioni (27/05/2013)</em><br />
-&#8212; Samuele Pasini
-</div></div>
-<div class="paragraph"><p>Il principale stack tecnologico adottato per lo sviluppo in ICT-Group è centrato attorno alle specifiche <strong>JavaEE</strong> (<a href="http://www.oracle.com/technetwork/java/javaee/overview/index.html">http://www.oracle.com/technetwork/java/javaee/overview/index.html</a>) con l&#8217;obiettivo di:</p></div>
+<div class="paragraph"><p>Il principale stack tecnologico adottato per lo sviluppo in ICT-Group è centrato attorno alle specifiche <strong>Java EE</strong> (<a href="http://www.oracle.com/technetwork/java/javaee/overview/index.html">http://www.oracle.com/technetwork/java/javaee/overview/index.html</a>) con l&#8217;obiettivo di:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-aderire a standard di qualità e compatibilità, quali le Java Specification Request (JSR) promosse dal Java Community Process (JSP)
+aderire a standard di qualità e compatibilità, quali le Java Specification Request (JSR) promosse dal Java Community Process (JCP)
 </p>
 </li>
 <li>
@@ -797,6 +790,25 @@ il meccanismo di verifica previsto dal template Facelets viene valutato prima di
 </li>
 </ul></div>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.hxtml</div>
+<div class="content">
+<pre><tt>        &lt;f:event type="preRenderView"
+                listener="#{permissionController.checkRoles}" /&gt;
+
+        &lt;ui:insert name="roles"&gt;
+                &lt;f:attribute name="roles" value="ANY" /&gt;
+        &lt;/ui:insert&gt;</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:define name="roles"&gt;
+                &lt;f:attribute name="roles" value="ORDER_EDIT" /&gt;
+        &lt;/ui:define&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>verifica dei permessi dell&#8217;utente corrente alla visione e/o utilizzo di specifici controlli e sezioni della pagina</strong>
@@ -809,6 +821,15 @@ ciascun componente può subordinare la propria visualizzazione a una o più ACL 
 </li>
 </ul></div>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm"&gt;
+                ...
+        &lt;/h:form&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>gestione degli eventuali parametri presenti nella richiesta</strong>
@@ -819,22 +840,81 @@ ciascun componente può subordinare la propria visualizzazione a una o più ACL 
 per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail
 </p>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">mail.eml</div>
+<div class="content">
+<pre><tt>Buongiorno,
+
+l'ordine 5555677 è stato registrato.
+
+I dettagli dell'ordine sono visibili qui: http://yourapp.com/order-manager/view-order?orderId=5555677
+
+Cordiali saluti.</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 per permettere la navigazione diretta tra pagine Web dell&#8217;applicazione mediante semplici link <strong>HTML</strong> (il template <strong>Facelets</strong> prevede che ciascuna maschera possa specificare quali parametri di navigazione recuperare e ne imposta il valore nei componenti desiderati tramite meccanismi JSF
 </p>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:define name="params"&gt;
+                &lt;f:metadata&gt;
+                        &lt;f:viewParam name="orderId"
+                                value="#{orderController.search.obj.id}" /&gt;
+                &lt;/f:metadata&gt;
+        &lt;/ui:define&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 in funzione di tali parametri e/o delle ACL soddisfatte dall&#8217;utente, possono poi essere indicati da ciascuna maschera eventuali pattern di navigazione alternativi verso cui redirigere la richiesta corrente)
 </p>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" /&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>gestione di una sezione di notifiche e messaggi di errore</strong>
 *il layout specifica una area di visualizzazione dei messaggi di notifica ed errore che tutti i componenti e le maschere possono richiamare in qualsiasi momento; la gestione dell&#8217;aspetto e dell&#8217;integrazione di tale area con la grafica delle maschere è gestita in modo centralizzato e facilmente manutenibile dal layout grafico generale.
 </p>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;style type="text/css"&gt;
+                .ui-growl {
+                        border-color: black
+                }
+
+                .ui-growl-item {
+                        color: black;
+                        background-color: gray;
+                        border-color: black;
+                }
+
+                .ui-growl-item-container {
+                        background-color: gray;
+                        border-color: black;
+                }
+        &lt;/style&gt;
+
+        ...
+        &lt;h:form id="global"&gt;
+                &lt;p:growl id="messages" /&gt;
+        &lt;/h:form&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>blocco dell&#8217;interazione utente mediante pannelli modali</strong>
@@ -847,6 +927,13 @@ in caso di specifiche tipologie di azioni o di latenza nella risposta del server
 </li>
 </ul></div>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.xhtml</div>
+<div class="content">
+<pre><tt>TODO</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 gestione della scadenza della sessione utente corrente e dell&#8217;avviso dell&#8217;avvicinarsi di tale termine (il modello funzionale delle maschere tiene sotto controllo lo scorrere del tempo e avvisa l&#8217;utente della necessità di salvare le operazioni correnti all&#8217;avvicinarsi dello scadere della sessione)
@@ -896,7 +983,7 @@ esempi</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-05-27 09:54:28 CEST
+Last updated 2013-05-27 18:12:42 CEST
 </div>
 </div>
 </body>
