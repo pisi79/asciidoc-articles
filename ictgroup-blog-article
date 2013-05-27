@@ -1,0 +1,221 @@
+= Sulle spalle dei giganti
+
+ifndef::code[]
+
+[verse, Samuele Pasini, Istruzioni (27/05/2013)]
+Genera il documento html digitando
++$ asciidoc -acode=[0|1] article.txt+
+
+endif::[]
+
+
+
+
+Il principale stack tecnologico adottato per lo sviluppo in ICT-Group è centrato attorno alle specifiche *JavaEE* (http://www.oracle.com/technetwork/java/javaee/overview/index.html) con l'obiettivo di:
+
+- aderire a standard di qualità e compatibilità, quali le Java Specification Request (JSR) promosse dal Java Community Process (JSP)
+- adottare tutte le più recenti tecniche di programmazione, quali l'uso di metacodice (Annotations on Java Types), iniezione di dipendenze (Contexts and Dependency Injection, CDI)
+- garantire leggibilità, omogeneità e semplicità del codice prodotto
+- ottenere modularità e manutenibilità
+
+La maggior parte delle applicazioni realizzate sono dunque applicazioni di tipo Enterprise, in esecuzione all'interno di un Application Server. 
+Il server scelto da ICT-Group per le installazioni correnti è _RedHat JBossAS_ (http://www.jboss.org/overview/) con possibilità di downscale delle funzionalità realizzate per permettere l'esecuzione su Web Server tradizionali e/o legacy quali _Apache Tomcat_ (http://tomcat.apache.org/).
+
+*_Sulla base di tali tecnologie, in ICT-Group abbiamo quindi sviluppato un insieme di strumenti e librerie di supporto aventi lo scopo di portare a fattore comune la gestione di moltissime problematiche ricorrenti nello sviluppo di applicazioni web e sistemi distribuiti_*
+
+
+
+== Interfaccia utente
+
+Le interfacce grafiche delle nostre applicazioni fanno uso di tecnologie Web consolidate quali *HTML*, *DHTML*, *XHTML*, *Javascript*, *AJAX*, *JSON*, *CSS*, *Twitter Bootstrap*, *Facelets*, *JSF*. L'accesso alle applicazioni e il loro utilizzo è quindi garantito a qualunque terminale provvisto di un tradizionale browser (_IE_, _Firefox_, _Safari_, _Chrome_, _Opera_, ... ).
+
+La modellazione dei contenuti in *HTML* e *XHTML* permette una chiara strutturazione delle maschere di interazione e dei contenuti presentati. L'uso di funzioni *Javascript* permette di spostare secondo convenienza parte della logica applicativa o di presentazione direttamente sul terminale dell'utente. Lo scambio di richieste/risposte e dati con i server applicativi mediante tecnologia *AJAX* e/o formati *JSON* consentono di ottenere dinamismo ed alta efficienza nel recupero e nella gestione dei contenuti dinamici. Infine, l'uso di *CSS* e template grafici basati sugli strumenti di *Twitter Bootstrap* consente con facilità di adattare l'aspetto delle maschere alle caratteristiche ed esigenze dei diversi terminali utente, estendendo facilmente il supporto a dispositivi mobili o con capacità grafiche o dimensioni dello schermo particolarmente limitate. 
+
+La costruzione delle maschere per la visualizzazione e la gestione dei dati mediante pagine Web si basa su templating *Facelets* (struttura generale, divisione in sezioni, riutilizzo e combinazione di parti), componenti *JSF* standard (campi di input/output e controlli per la navigazione) e librerie open source aggiuntive quali *PrimeFaces* (presentazione tabellare, campi di inserimento e controlli avanzati, grafici) e *PrettyFaces* (URL semplificati e bookmarkabili).
+
+
+=== Il nostro tocco...
+
+Il modello funzionale e di struttura grafica del layout realizzato in ICT-Group permette di portare a fattor comune per tutte le maschere dell'applicazione, le operazioni di:
+
+- *verifica dei permessi dell'utente corrente per l'accesso alla pagina*
+* il meccanismo di verifica previsto dal template Facelets viene valutato prima di ogni visualizzazione confrontando le caratteristiche dell'utente con la Access Control List, ACL,  specificata dalla pagina
+
+ifeval::[{code}==1]
+.template.hxtml
+------------------
+  <f:event type="preRenderView"
+		listener="#{permissionController.checkRoles}" />
+
+	<ui:insert name="roles">
+		<f:attribute name="roles" value="ANY" />
+	</ui:insert>
+------------------
+
+.page.xhtml
+------------------
+	<ui:define name="roles">
+		<f:attribute name="roles" value="ORDER_EDIT" />
+	</ui:define>
+------------------
+endif::[]
+
+- *verifica dei permessi dell'utente corrente alla visione e/o utilizzo di specifici controlli e sezioni della pagina*
+* ciascun componente può subordinare la propria visualizzazione a una o più ACL e/o altre condizioni dinamiche
+
+ifeval::[{code}==1]
+.page.xhtml
+------------------
+	<h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm">
+		...
+	</h:form>
+------------------
+endif::[]
+
+- *gestione degli eventuali parametri presenti nella richiesta*
+
+- per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail
+
+ifeval::[{code}==1]
+.mail.eml
+------------------
+Buongiorno,
+
+l'ordine 5555677 è stato registrato.
+
+I dettagli dell'ordine sono visibili qui: http://yourapp.com/order-manager/view-order?orderId=5555677
+
+Cordiali saluti.
+------------------
+endif::[]
+
+- per permettere la navigazione diretta tra pagine Web dell'applicazione mediante semplici link *HTML* (il template *Facelets* prevede che ciascuna maschera possa specificare quali parametri di navigazione recuperare e ne imposta il valore nei componenti desiderati tramite meccanismi JSF
+
+ifeval::[{code}==1]
+.page.xhtml
+------------------
+	<ui:define name="params">
+		<f:metadata>
+			<f:viewParam name="orderId"
+				value="#{orderController.search.obj.id}" />
+		</f:metadata>
+	</ui:define>
+------------------
+endif::[]
+
+- in funzione di tali parametri e/o delle ACL soddisfatte dall'utente, possono poi essere indicati da ciascuna maschera eventuali pattern di navigazione alternativi verso cui redirigere la richiesta corrente)
+
+ifeval::[{code}==1]
+.page.xhtml
+------------------
+	<perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" />
+------------------
+endif::[]
+
+- *gestione di una sezione di notifiche e messaggi di errore*
+*il layout specifica una area di visualizzazione dei messaggi di notifica ed errore che tutti i componenti e le maschere possono richiamare in qualsiasi momento; la gestione dell'aspetto e dell'integrazione di tale area con la grafica delle maschere è gestita in modo centralizzato e facilmente manutenibile dal layout grafico generale.
+
+ifeval::[{code}==1]
+.template.xhtml
+------------------
+	<style type="text/css">
+		.ui-growl {
+			border-color: black
+		}
+
+		.ui-growl-item {
+			color: black;
+			background-color: gray;
+			border-color: black;
+		}
+
+		.ui-growl-item-container {
+			background-color: gray;
+			border-color: black;
+		}
+	</style>
+
+	...
+	<h:form id="global">
+		<p:growl id="messages" />
+	</h:form>
+------------------
+endif::[]
+
+- *blocco dell'interazione utente mediante pannelli modali*
+
+* in caso di specifiche tipologie di azioni o di latenza nella risposta del server, vengono intercettate le richieste AJAX, gli eventi DHTML e le navigazioni HTTP del browser, per permettere di impedire inserimenti e click ripetuti o semplicemente per non lasciare l'utente nel dubbio che uno specifico comando sia stato o meno recepito dall'applicazione
+
+ifeval::[{code}==1]
+.template.xhtml
+------------------
+TODO
+------------------
+endif::[]
+
+- gestione della scadenza della sessione utente corrente e dell'avviso dell'avvicinarsi di tale termine (il modello funzionale delle maschere tiene sotto controllo lo scorrere del tempo e avvisa l'utente della necessità di salvare le operazioni correnti all'avvicinarsi dello scadere della sessione)
+
+
+
+
+
+
+
+
+ifdef::workinprogress[]
+
+Sessioni di utilizzo
+
+La gestione della logica server-side dietro alle maschere applicative avviene mediante componenti CDI e backing bean JSF.
+La gestione delle interazioni reciproche di tali componenti è tipicamente ottenuta con tecniche di inversione del controllo basate su iniezione delle dipendenze (non è il componente che ha bisogno di un altro a richiamarlo, ma il container in cui entrambi eseguono che “inietta” nel primo il riferimento al secondo) ed eventi (il componente che esegue un'operazione non notifica direttamente tutti gli altri componenti interessati, ma si limita a generare un evento alla cui gestione si registrano gli altri componenti, per poter poi provvedere autonomamente).
+
+Il nostro tocco...
+
+Tramite l'uso dei tipi generici introdotti a partire da Java 5, in ICT-Group abbiamo sviluppato un insieme di armature base per diversi tipi di componenti (con tempo di vita di richiesta, di sessione, con necessità di disegnare grafici, scheduling, ecc..), dette genericamente “Controller”, allo scopo di portare a fattor comune:
+- la associazione di uno specifico componente JSF di tipo Controller con il corrispondente tipo di dato da esso gestito: il componente finale si limita a dichiarare tale tipo e può introdurre, se necessario, logiche custom di accesso alle diverse parti del dato, sovrascrivendo la logica dell'armatura base
+- la logica di visualizzazione e gestione del dato, tramite standardizzazione dei pattern di navigazione tra le videate di ricerca, creazione, modifica, esportazione o wizard.
+- logica di ricerca e paginazione sulla base dei criteri di filtro specificati dall'utente, affiancando questi ultimi alla inizializzazione del componente sulla base delle caratteristiche dell'utente corrente, per permettere la selezione e visualizzazione dei soli dati per cui l'utente è abilitato (es: supporto ad applicazioni multicliente o all'accesso alle stesse maschere da parte di utenti con diversi ruoli applicativi), sulla base del suo profilo.
+- generazione di eventi per permettere la notifica di variazioni dei dati (es: aggiornamento degli elenchi e delle opzioni visualizzate da altri componenti dipendenti dai dati gestiti dal componente corrente) 
+
+Identificazione, Autorizzazione, Profilazione
+
+Uso di moduli basati sulle specifiche JAAS per garantire l'accesso alle applicazioni mediante integrazione con diversi tipi di sistemi per la gestione dell'identità (IDM), quali ad esempio basi di dati, alberi LDAP, sistemi basati su CAS,  token Windows NTLM o altri tipi di single sign-on.
+
+Il nostro tocco...
+
+Poiché i tre aspetti dell'accesso a un'applicazione, riconoscimento dell' identità, del ruolo applicativo e del sottoinsieme di dati a cui un utente è abilitato (o profilato) sono spesso governati da logiche eterogenee, permettiamo la componibilità di moduli JAAS a cascata, ad esempio per permettere scenari quali:
+- riconoscimento dell'identità dell'utente mediante CAS o NTLM
+- riconoscimento del ruolo applicativo dell'utente verifica dell'appartenenza dell'utente a specifiche porzioni di un albero LDAP, dedicate a una particolare applicazione o dominio applicativo
+- associazione del ruolo o dei ruoli posseduti dall'utente con uno o piu' specifici oggetti del dominio applicativo (es: un dipartimento, un reparto, una area commerciale) e profilazione a priori dei dati accessibili all'utente mediante tale criterio di filtro.
+- accesso di tipo applicativo (machine-to-machine) da parte di altri sistemi informatici ai servizi esposti dalla applicazione, mediante tecniche di autenticazione alternative e/o tradizionali (WS-Security, Basic-Authentication classica basata su username e password, ecc..)
+
+Orchestrazione e coordinamento della logica applicativa
+EJB, Timer (Quartz), JMS, ESB, ... la nuova cosa di flower
+bla bla bla
+
+
+Gestione della persistenza
+Tecniche di ORM basate sulle specifiche JPA2 e implementazione basata su Hibernate, con  transazionalità gestita a default dal container applicativo.
+Gestione dell'accesso fortemente concorrente ai dati mediante tecniche di lock pessimistico o ottimistico delle righe (con versionamento del dato).
+Possibilità di introdurre logiche custom di apertura e chiusura delle transazioni, nonché coordinamento di transazioni distribuite con basi dati di tipo XA.
+Utilizzo di accesso diretto al dato con query SQL native e/o basate sulle specifiche JDBC, per ottenere espressività, efficienza e/o gestione di scenari di inserimento/modifiche di tipo BULK.
+
+Il nostro tocco...
+
+Analogamente a quanto fatto a proposito delle armature basi (Controller) dei componenti JSF,  sviluppo di un armatura basa (Repository) per gestire l'associazione dei DAO di tipo EJB Stateless Session Bean ai diversi tipo di dato, mappati come EJB di Entity Bean.
+Integrazione immedaita di tale componente con il corrispondente Controller JSF, grazie alle logiche portate a fattore comune dalle classi base di entrambi i tipi di componente.
+
+Adozione di pattern di ricerca e filtraggio dei dati tali da permettere lo scambio efficace dei criteri di filtro tra pagine web, controller jsf e repository ejb: l'oggetto di ricerca contiene istanze di esempio del tipo di dato da cercare, con i vari campi valorizzabili direttamente dalle maschere, per ricerche di tipo match diretto e ricerca con range
+L'uso di tale oggetto ricerca all'interno del repository può essere ricondotto a i criteria di JPA2, all'uso di query EJBQL o persino query native.
+Nel nostro caso portato a fattor comune la costruzione di query per l'uso di questo oggetto al fine di query di conteggio, query di selezione e raggruppamento (es: per reportistica o graficazione di valori).
+Ciascun componente di tipo Repository può introdurre customizzazioni di tale meccanismo per gestire casistitiche quali uso di flag per ricerche di sottoinsiemi di dati, uso di query innestate, gestione di conversioni e/o semantiche di ricerca specifiche di un particolare oggetto (da ridire).
+
+Integrazione con altri sistemi e tecnologie
+
+WS, REST, RMI, FTP, uso diretto di librerie.. 
+
+Il nostro tocco...
+esempi
+
+
+endif::[]
