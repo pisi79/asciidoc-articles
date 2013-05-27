@@ -4,7 +4,7 @@ ifndef::code[]
 
 [verse, Samuele Pasini, Istruzioni (27/05/2013)]
 Genera il documento html digitando
-+$ asciidoc -acode=[0|1] ictgroup-blog-article.asciidoc+
++$ asciidoc -acode=[0|1] [-aworkinprogress=true] ictgroup-blog-article.asciidoc+
 
 endif::[]
 
