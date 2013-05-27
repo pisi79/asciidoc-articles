@@ -13,7 +13,7 @@ endif::[]
 
 Il principale stack tecnologico adottato per lo sviluppo in ICT-Group è centrato attorno alle specifiche *JavaEE* (http://www.oracle.com/technetwork/java/javaee/overview/index.html) con l'obiettivo di:
 
-- aderire a standard di qualità e compatibilità, quali le Java Specification Request (JSR) promosse dal Java Community Process (JSP)
+- aderire a standard di qualità e compatibilità, quali le Java Specification Request (JSR) promosse dal Java Community Process (JCP)
 - adottare tutte le più recenti tecniche di programmazione, quali l'uso di metacodice (Annotations on Java Types), iniezione di dipendenze (Contexts and Dependency Injection, CDI)
 - garantire leggibilità, omogeneità e semplicità del codice prodotto
 - ottenere modularità e manutenibilità
