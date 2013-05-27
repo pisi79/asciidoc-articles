@@ -42,6 +42,7 @@ Il modello funzionale e di struttura grafica del layout realizzato in ICT-Group 
 * il meccanismo di verifica previsto dal template Facelets viene valutato prima di ogni visualizzazione confrontando le caratteristiche dell'utente con la Access Control List, ACL,  specificata dalla pagina
 
 ifeval::[{code}==1]
+
 .template.hxtml
 ------------------
   <f:event type="preRenderView"
@@ -64,6 +65,7 @@ endif::[]
 * ciascun componente può subordinare la propria visualizzazione a una o più ACL e/o altre condizioni dinamiche
 
 ifeval::[{code}==1]
+
 .page.xhtml
 ------------------
 	<h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm">
@@ -77,6 +79,7 @@ endif::[]
 - per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail
 
 ifeval::[{code}==1]
+
 .mail.eml
 ------------------
 Buongiorno,
@@ -92,6 +95,7 @@ endif::[]
 - per permettere la navigazione diretta tra pagine Web dell'applicazione mediante semplici link *HTML* (il template *Facelets* prevede che ciascuna maschera possa specificare quali parametri di navigazione recuperare e ne imposta il valore nei componenti desiderati tramite meccanismi JSF
 
 ifeval::[{code}==1]
+
 .page.xhtml
 ------------------
 	<ui:define name="params">
@@ -106,6 +110,7 @@ endif::[]
 - in funzione di tali parametri e/o delle ACL soddisfatte dall'utente, possono poi essere indicati da ciascuna maschera eventuali pattern di navigazione alternativi verso cui redirigere la richiesta corrente)
 
 ifeval::[{code}==1]
+
 .page.xhtml
 ------------------
 	<perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" />
@@ -116,6 +121,7 @@ endif::[]
 *il layout specifica una area di visualizzazione dei messaggi di notifica ed errore che tutti i componenti e le maschere possono richiamare in qualsiasi momento; la gestione dell'aspetto e dell'integrazione di tale area con la grafica delle maschere è gestita in modo centralizzato e facilmente manutenibile dal layout grafico generale.
 
 ifeval::[{code}==1]
+
 .template.xhtml
 ------------------
 	<style type="text/css">
@@ -147,6 +153,7 @@ endif::[]
 * in caso di specifiche tipologie di azioni o di latenza nella risposta del server, vengono intercettate le richieste AJAX, gli eventi DHTML e le navigazioni HTTP del browser, per permettere di impedire inserimenti e click ripetuti o semplicemente per non lasciare l'utente nel dubbio che uno specifico comando sia stato o meno recepito dall'applicazione
 
 ifeval::[{code}==1]
+
 .template.xhtml
 ------------------
 TODO
