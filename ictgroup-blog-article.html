@@ -790,6 +790,25 @@ il meccanismo di verifica previsto dal template Facelets viene valutato prima di
 </li>
 </ul></div>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.hxtml</div>
+<div class="content">
+<pre><tt>        &lt;f:event type="preRenderView"
+                listener="#{permissionController.checkRoles}" /&gt;
+
+        &lt;ui:insert name="roles"&gt;
+                &lt;f:attribute name="roles" value="ANY" /&gt;
+        &lt;/ui:insert&gt;</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:define name="roles"&gt;
+                &lt;f:attribute name="roles" value="ORDER_EDIT" /&gt;
+        &lt;/ui:define&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>verifica dei permessi dell&#8217;utente corrente alla visione e/o utilizzo di specifici controlli e sezioni della pagina</strong>
@@ -802,6 +821,15 @@ ciascun componente può subordinare la propria visualizzazione a una o più ACL 
 </li>
 </ul></div>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm"&gt;
+                ...
+        &lt;/h:form&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>gestione degli eventuali parametri presenti nella richiesta</strong>
@@ -814,22 +842,79 @@ ciascun componente può subordinare la propria visualizzazione a una o più ACL 
 per permettere la navigazione tra maschere tramite link <strong>HTML</strong>
 </p>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:insert name="params"&gt;
+        &lt;/ui:insert&gt;</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:define name="params"&gt;
+                &lt;f:metadata&gt;
+                        &lt;f:viewParam name="deviceId"
+                                value="#{deviceController.search.obj.deviceId}" /&gt;
+                &lt;/f:metadata&gt;
+        &lt;/ui:define&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail
 </p>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">pretty-config.xml</div>
+<div class="content">
+<pre><tt>        &lt;url-mapping id="orderView"&gt;
+                &lt;pattern value="/gestore-ordini/vedi-ordine/#{orderController.element.id}" /&gt;
+                &lt;action&gt;#{orderController.viewCurrent}&lt;/action&gt;
+                &lt;view-id&gt;/ordini/dettaglio.jsf&lt;/view-id&gt;
+        &lt;/url-mapping&gt;</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">mail.eml</div>
+<div class="content">
+<pre><tt>Buongiorno,
+
+l'ordine 5555677 è stato registrato.
+
+I dettagli dell'ordine sono visibili qui: http://yourapp.com/gestore-ordini/vedi-ordine/5555677
+
+Cordiali saluti.</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 per permettere la navigazione diretta tra pagine Web dell&#8217;applicazione mediante semplici link <strong>HTML</strong> (il template <strong>Facelets</strong> prevede che ciascuna maschera possa specificare quali parametri di navigazione recuperare e ne imposta il valore nei componenti desiderati tramite meccanismi JSF
 </p>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:define name="params"&gt;
+                &lt;f:metadata&gt;
+                        &lt;f:viewParam name="orderId"
+                                value="#{orderController.search.obj.id}" /&gt;
+                &lt;/f:metadata&gt;
+        &lt;/ui:define&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 in funzione di tali parametri e/o delle ACL soddisfatte dall&#8217;utente, possono poi essere indicati da ciascuna maschera eventuali pattern di navigazione alternativi verso cui redirigere la richiesta corrente)
 </p>
 </li>
 </ul></div>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" /&gt;</tt></pre>
+</div></div>
 </div></div>
 </li>
 <li>
@@ -844,6 +929,33 @@ il layout specifica una area di visualizzazione dei messaggi di notifica ed erro
 </li>
 </ul></div>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;style type="text/css"&gt;
+                .ui-growl {
+                        border-color: black
+                }
+
+                .ui-growl-item {
+                        color: black;
+                        background-color: gray;
+                        border-color: black;
+                }
+
+                .ui-growl-item-container {
+                        background-color: gray;
+                        border-color: black;
+                }
+        &lt;/style&gt;
+
+        ...
+        &lt;h:form id="global"&gt;
+                &lt;p:growl id="messages" /&gt;
+        &lt;/h:form&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>blocco dell&#8217;interazione utente mediante pannelli modali</strong>
@@ -856,6 +968,22 @@ in caso di specifiche tipologie di azioni o di latenza nella risposta del server
 </li>
 </ul></div>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:insert name="modalWait"&gt;
+                &lt;p:ajaxStatus onstart="statusDialog.show();"
+                        onsuccess="statusDialog.hide();" id="ajaxStatusPanel"&gt;
+                        &lt;f:facet name="start"&gt;
+                        &lt;/f:facet&gt;
+                        &lt;f:facet name="complete"&gt;
+                                &lt;h:outputText value="" /&gt;
+                        &lt;/f:facet&gt;
+                &lt;/p:ajaxStatus&gt;
+        &lt;/ui:insert&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>verifica della presenza di dati nei campi di input prima di abbandonare la pagina corrente</strong>
@@ -866,13 +994,50 @@ in caso di specifiche tipologie di azioni o di latenza nella risposta del server
 vengono intercettate le navigazioni in uscita dalla pagina, effettuate sul browser tramite link diretti, pe avvisare l&#8217;utente di eventuali dati non confermati nei form della pagina attuale
 </p>
 </li>
+</ul></div>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:insert name="dirty-check"&gt;
+                &lt;script type="text/javascript"&gt;
+                        $(function() {
+                                // Set the unload message whenever any input element get changed.
+                                $(':input').on('change', function() {
+                                        setConfirmUnload(true);
+                                });
+
+                                // Turn off the unload message whenever a form get submitted properly.
+                                $('form').on('submit', function() {
+                                        setConfirmUnload(false);
+                                });
+                        });
+
+                        function setConfirmUnload(on) {
+                                var message = "Attenzione! Sono presenti dati non salvati. Vuoi veramente uscire?";
+                                window.onbeforeunload = (on) ? function() {
+                                        return message;
+                                } : null;
+                        }
+                &lt;/script&gt;
+        &lt;/ui:insert&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 ciascuna maschera/pagina web puo' poi escludere tale comportamente semplicemente ridefinendo la sezione <tt>dirty-check</tt> del template
 </p>
 </li>
 </ul></div>
-</li>
+<div class="listingblock">
+<div class="title">page.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:define name="dirty-check"&gt;
+                &lt;!-- skip dirty checking --&gt;
+        &lt;/ui:insert&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>gestione della scadenza della sessione utente corrente</strong>
@@ -885,6 +1050,21 @@ gestione della scadenza della sessione utente corrente e dell&#8217;avviso dell&
 </li>
 </ul></div>
 </li>
+</ul></div>
+<div class="listingblock">
+<div class="title">template.xhtml</div>
+<div class="content">
+<pre><tt>        &lt;ui:insert name="sessiontimeout"&gt;
+                &lt;p:idleMonitor timeout="108000" onidle="idleDialog.show();"
+                        onactive="idleDialog.hide();" /&gt;
+                &lt;p:dialog header="Cosa Succede?" resizable="false"
+                        widgetVar="idleDialog" modal="true" width="400"&gt;
+                        &lt;h:outputText
+                                value="Sei ancora al monitor? Salva per evitare di perdere il tuo lavoro!" /&gt;
+                &lt;/p:dialog&gt;
+        &lt;/ui:insert&gt;</tt></pre>
+</div></div>
+<div class="ulist"><ul>
 <li>
 <p>
 <strong>correttezza del comportamento cross-browser delle maschere</strong>
@@ -898,6 +1078,42 @@ la parte iniziale del template gestisce la corretta dichiarazione del DOCTYPE e 
 </ul></div>
 </li>
 </ul></div>
+<div class="listingblock">
+<div class="title">template.xhtml</div>
+<div class="content">
+<pre><tt>&lt;!DOCTYPE html&gt;
+&lt;f:view contentType="text/html" encoding="UTF-8"
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:ui="http://java.sun.com/jsf/facelets"
+        xmlns:p="http://primefaces.org/ui"
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:c="http://java.sun.com/jsp/jstl/core"
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:base="http://www.ict-group.it/commons2/base"
+        xmlns:perm="http://www.ict-group.it/commons2/permissions"
+        xmlns:form="http://www.ict-group.it/commons2/form"&gt;
+
+        &lt;h:outputText escape="false"
+                value="&amp;lt;!--[if lt IE 7 ]&amp;gt; &amp;lt;html class='ie ie6' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+        &lt;h:outputText escape="false"
+                value="&amp;lt;!--[if IE 7 ]&amp;gt; &amp;lt;html class='ie ie7' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+        &lt;h:outputText escape="false"
+                value="&amp;lt;!--[if IE 8 ]&amp;gt; &amp;lt;html class='ie ie8' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+
+        &lt;h:outputText escape="false"
+                value="&amp;lt;!--[if (gte IE 9)|!(IE)]&amp;gt;&amp;lt;!--&amp;gt;" /&gt;
+        &lt;html lang="it"&gt;
+&lt;h:outputText escape="false" value="&amp;lt;!--&amp;lt;![endif]--&amp;gt;" /&gt;
+
+        ...
+
+        &lt;h:head&gt;
+                ...
+                &lt;h:outputStylesheet library="css" name="font-awesome.css" target="head" /&gt;
+                &lt;h:outputText escape="false"
+                value="&amp;lt;!--[if IE 7 ]&amp;gt; &amp;lt;link rel='stylesheet' href='assets/css/font-awesome-ie7.min.css' &amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+                ...</tt></pre>
+</div></div>
 </div>
 </div>
 </div>
@@ -919,27 +1135,342 @@ la parte iniziale del template gestisce la corretta dichiarazione del DOCTYPE e 
 <p>
 il componente finale si limita a dichiarare tale tipo e può introdurre, se necessario, logiche custom di accesso alle diverse parti del dato, sovrascrivendo la logica dell&#8217;armatura base
 </p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="title">OrderController.java</div>
+<div class="content">
+<pre><tt>@Named
+@SessionScoped
+public class OrderController extends AbstractLazyController&lt;Order&gt;
+{
+        /**
+         * Minima customizzazione di un componente di tipo lazy controller
+         */
+        @Inject
+        @OwnRepository(OrderRepository.class)
+        OrderRepository orderRepository;
+}</tt></pre>
+</div></div>
 <div class="ulist"><ul>
 <li>
 <p>
-la logica di visualizzazione e gestione del dato, tramite standardizzazione dei pattern di navigazione tra le videate di ricerca, creazione, modifica, esportazione o wizard.
+<strong>la logica di visualizzazione e gestione del dato</strong>
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+standardizzazione dei pattern di navigazione tra le videate di ricerca, creazione, modifica, esportazione o wizard
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="title">AbstractLazyController.java</div>
+<div class="content">
+<pre><tt>        ...
+        public static final String REDIRECT_PARAM = "?faces-redirect=true";
+
+        @PostConstruct
+        public void init() {
+                injectRepositoryAndPages();
+                ...
+        }
+
+        private T element;
+        private LocalLazyDataModel&lt;T&gt; model;
+
+        public String viewCurrent() {
+                // fetch dei dati
+                element = getRepository().fetch(getId(element));
+                ...
+                // vista di arrivo
+                return viewPage();
+        }
+
+        public String modCurrent() {
+                ...
+                return editPage();
+        }
+
+        public String update() {
+                try {
+                        ...
+
+                        // salvataggio
+                        getRepository().update(element);
+
+                        // refresh dati
+                        ...
+                        refreshModel();
+
+                        // vista di arrivo
+                        return listPage();
+
+                } catch (Exception exc) {
+                        return editPageNoRedirect();
+                }
+        }</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">OrderController.java</div>
+<div class="content">
+<pre><tt>@Named
+@SessionScoped
+public class OrderController extends AbstractLazyController&lt;Order&gt;
+{
+        ...
+
+        @ViewPage
+        protected static final String VIEW_PAGE = "/ordini/dettaglio.xhtml";
+
+        @EditPage
+        protected static final String EDIT_PAGE = "/ordini/modifica.xhtml";
+
+        @ListPage
+        protected static final String LIST_PAGE = "/ordini/lista.xhtml";
+}</tt></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>logica di profilazione, ricerca e paginazione dei risultati</strong>
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+recupero dei criteri di filtro specificati dall&#8217;utente, affiancando questi ultimi a quelli  usati per inizializzare il componente sulla base del profilo dell&#8217;utente stesso, per permettere la selezione e visualizzazione dei soli dati per cui l&#8217;utente è abilitato (es: supporto ad applicazioni multicliente o all&#8217;accesso alle stesse maschere da parte di utenti con diversi ruoli applicativi)
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="title">AbstractLazyController.java</div>
+<div class="content">
+<pre><tt>        ...
+        public static final String REDIRECT_PARAM = "?faces-redirect=true";
+
+        @PostConstruct
+        public void init() {
+                ...
+                defaultCriteria();
+        }
+
+        private Search&lt;T&gt; search;
+        private LocalLazyDataModel&lt;T&gt; model;
+
+        public void refreshModel() {
+                setModel(new LocalLazyDataModel&lt;T&gt;(search, getRepository()));
+        }</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">OrderController.java</div>
+<div class="content">
+<pre><tt>@Named
+@SessionScoped
+public class OrderController extends AbstractLazyController&lt;Order&gt;
+{
+        ...
+
+        @Inject
+        LoginController loginController;
+
+        @Override
+        public void defaultCriteria()
+        {
+                getSearch().getObj().setUser(loginController.getUser().getId());
+                getSearch().getFrom().setData(ultimi6mesi());
+        }
+
+}</tt></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>generazione di eventi per permettere la notifica di variazioni dei dati</strong>
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+es: aggiornamento degli elenchi e delle opzioni visualizzate da altri componenti dipendenti dai dati gestiti dal componente corrente)
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="listingblock">
+<div class="title">UpdateEvent.java</div>
+<div class="content">
+<pre><tt>public class UpdatedEvent&lt;T&gt;
+{
+        protected T obj;
+
+        ...
+
+        public T getObj()
+        {
+                return obj;
+        }
+
+}</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">PropertiesProducer.java</div>
+<div class="content">
+<pre><tt>        ...
+        @Inject
+        TipologieProdottiRepository tipologieProdottiRepository;
+
+        @SuppressWarnings("rawtypes")
+        private Map&lt;Class, SelectItem[]&gt; items = new HashMap&lt;Class,SelectItem[]&gt;();
+
+        @Produces
+        @Named
+        public SelectItem[] getTipologieProdottiItems() {
+                Search&lt;TipologiaProdotto&gt; search = new Search&lt;TipologiaProdotto&gt;(TipologiaProdotto.class);
+                search.getObj().setFavourtes(loginController.getUser().getFavourites());
+                return checkItems(search, tipologieProdottiRepository, "id", "nome",
+                                "nessuna tipologia disponibile", "tipologia...");
+        }
+
+        private SelectItem[] checkItems(Search&lt;T&gt; searcg, Repository&lt;T&gt; ejb,
+                        String idField, String valueField, String emptyMessage,
+                        String labelMessage) {
+                Class clazz = search.getObj().getClass();
+                if (items.get(clazz) == null || items.get(clazz).length == 0) {
+                        items.put(clazz, setupItems(search, ejb, idField,
+                                        valueField, emptyMessage, labelMessage));
+                }
+                return items.get(clazz);
+        }
+
+        @Override
+        public void observeUpdate(@Observes UpdatedEvent updatedEvent)
+        {
+                items.put(updatedEvent.getObj().getClass(),null);
+        }</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">AbstractLazyController.java</div>
+<div class="content">
+<pre><tt>        ...
+        @Inject
+        Event&lt;UpdatedEvent&gt; updatedEvent;
+
+        public String update() {
+                ...
+
+                // salvataggio
+                getRepository().update(element);
+
+                // refresh dati
+                updatedEvent.fire(new UpdatedEvent(element));
+
+                ...
+        }</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">OrderController.java</div>
+<div class="content">
+<pre><tt>        // niente da implementare</tt></pre>
+</div></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_gestione_della_persistenza">Gestione della persistenza</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Tecniche di Object Relational Mapping (ORM) basate sulle specifiche <strong>JPA2</strong> e implementazione basata su <strong>Hibernate</strong>, con  transazionalità gestita a default dal container applicativo.</p></div>
+<div class="paragraph"><p>Gestione dell&#8217;accesso fortemente concorrente ai dati mediante tecniche di lock pessimistico o ottimistico delle righe (con versionamento del dato).</p></div>
+<div class="paragraph"><p>Possibilità di introdurre logiche custom di apertura e chiusura delle transazioni, nonché coordinamento di transazioni distribuite con basi dati di tipo <strong>XA</strong>.</p></div>
+<div class="paragraph"><p>Utilizzo di accesso diretto al dato con query SQL native e/o basate sulle specifiche <strong>JDBC</strong>, per ottenere espressività, efficienza e/o gestione di scenari di inserimento/modifiche di tipo bulk.</p></div>
+<div class="sect2">
+<h3 id="_il_nostro_tocco_8230_3">Il nostro tocco&#8230;</h3>
+<div class="paragraph"><p>Analogamente a quanto fatto a proposito delle armature basi (<em>"Controller"</em>) dei componenti <strong>JSF</strong>,  sviluppo di un armatura basa (detta <em>"Repository"</em>) per gestire l&#8217;associazione dei Data Access Object (DAO) di tipo <strong>EJB Stateless Session Bean</strong> ai diversi tipo di dato, mappati come <strong>EJB Entity Bean</strong>.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Integrazione immedaita di tale componente con il corrispondente Controller <strong>JSF</strong>, grazie alle logiche portate a fattore comune dalle classi base di entrambi i tipi di componente.
 </p>
 </li>
 <li>
 <p>
-logica di ricerca e paginazione sulla base dei criteri di filtro specificati dall&#8217;utente, affiancando questi ultimi alla inizializzazione del componente sulla base delle caratteristiche dell&#8217;utente corrente, per permettere la selezione e visualizzazione dei soli dati per cui l&#8217;utente è abilitato (es: supporto ad applicazioni multicliente o all&#8217;accesso alle stesse maschere da parte di utenti con diversi ruoli applicativi), sulla base del suo profilo.
+Adozione di pattern di ricerca e filtraggio dei dati tali da permettere lo scambio efficace dei criteri di filtro tra pagine web, controller jsf e repository ejb: l&#8217;oggetto di ricerca contiene istanze di esempio del tipo di dato da cercare, con i vari campi valorizzabili direttamente dalle maschere, per ricerche di tipo match diretto e ricerca con range.
 </p>
 </li>
 <li>
 <p>
-generazione di eventi per permettere la notifica di variazioni dei dati (es: aggiornamento degli elenchi e delle opzioni visualizzate da altri componenti dipendenti dai dati gestiti dal componente corrente)
+L&#8217;uso di tale oggetto ricerca all&#8217;interno del repository può essere ricondotto a i criteria di <strong>JPA2</strong>, all&#8217;uso di query <strong>EJBQL</strong> o persino query native.
+</p>
+</li>
+<li>
+<p>
+Nel nostro caso portato a fattor comune la costruzione di query per l&#8217;uso di questo oggetto al fine di query di conteggio, query di selezione e raggruppamento (es: per reportistica o graficazione di valori).
+</p>
+</li>
+<li>
+<p>
+Ciascun componente di tipo Repository può introdurre customizzazioni di tale meccanismo per gestire casistitiche quali uso di flag per ricerche di sottoinsiemi di dati, uso di query innestate, gestione di conversioni e/o semantiche di ricerca specifiche di un particolare oggetto (da ridire).
 </p>
 </li>
 </ul></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_identificazione_autorizzazione_profilazione">Identificazione, Autorizzazione, Profilazione</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Uso di moduli basati sulle specifiche <strong>JAAS</strong> per garantire l&#8217;accesso alle applicazioni mediante integrazione con diversi tipi di sistemi per la gestione dell&#8217;identità (<strong>IDM</strong>), quali ad esempio basi di dati, alberi <strong>LDAP</strong>, sistemi basati su <strong>CAS</strong>,  token <strong>Windows NTLM</strong> o altri tipi di single sign-on.</p></div>
+<div class="sect2">
+<h3 id="_il_nostro_tocco_8230_4">Il nostro tocco&#8230;</h3>
+<div class="paragraph"><p>Poiché i tre aspetti dell&#8217;accesso a un&#8217;applicazione, riconoscimento dell' identità, del ruolo applicativo e del sottoinsieme di dati a cui un utente è abilitato (o profilato) sono spesso governati da logiche eterogenee, permettiamo la componibilità di moduli <strong>JAAS</strong> a cascata, ad esempio per permettere scenari quali:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+riconoscimento dell&#8217;identità dell&#8217;utente mediante <strong>CAS</strong> e/o <strong>NTLM</strong>
+</p>
+</li>
+<li>
+<p>
+riconoscimento del ruolo applicativo dell&#8217;utente verifica dell&#8217;appartenenza dell&#8217;utente a specifiche porzioni di un albero <strong>LDAP</strong>, dedicate a una particolare applicazione o dominio applicativo
+</p>
+</li>
+<li>
+<p>
+associazione del ruolo o dei ruoli posseduti dall&#8217;utente con uno o piu' specifici oggetti del dominio applicativo (es: un dipartimento, un reparto, una area commerciale) e profilazione a priori dei dati accessibili all&#8217;utente mediante tale criterio di filtro.
+</p>
+</li>
+<li>
+<p>
+accesso di tipo applicativo (machine-to-machine) da parte di altri sistemi informatici ai servizi esposti dalla applicazione, mediante tecniche di autenticazione alternative e/o tradizionali (WS-Security, Basic-Authentication classica basata su username e password, ecc..)
+</p>
 </li>
 </ul></div>
-</li>
-</ul></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_orchestrazione_e_coordinamento_della_logica_applicativa">Orchestrazione e coordinamento della logica applicativa</h2>
+<div class="sectionbody">
+<div class="paragraph"><p><strong>EJB</strong>, Timer (<strong>Quartz</strong>), <strong>JMS</strong>, <strong>ESB</strong>, &#8230; la nuova cosa di flower</p></div>
+<div class="paragraph"><p>Bla bla bla.</p></div>
+<div class="sect2">
+<h3 id="_il_nostro_tocco_8230_5">Il nostro tocco&#8230;</h3>
+<div class="paragraph"><p>Esempi</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_integrazione_con_altri_sistemi_e_tecnologie">Integrazione con altri sistemi e tecnologie</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>WS, REST, RMI, FTP, uso diretto di librerie..</p></div>
+<div class="sect2">
+<h3 id="_il_nostro_tocco_8230_6">Il nostro tocco&#8230;</h3>
+<div class="paragraph"><p>Esempi</p></div>
 </div>
 </div>
 </div>
@@ -947,7 +1478,7 @@ generazione di eventi per permettere la notifica di variazioni dei dati (es: agg
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-06-03 09:16:19 CEST
+Last updated 2013-06-03 10:03:01 CEST
 </div>
 </div>
 </body>
