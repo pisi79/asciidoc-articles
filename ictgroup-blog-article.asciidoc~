@@ -80,8 +80,7 @@ ifeval::[{code}==1]
 endif::[]
 
 - *gestione degli eventuali parametri presenti nella richiesta*
-+
---
+
 ** per permettere la navigazione tra maschere tramite link *HTML*
 
 ifeval::[{code}==1]
@@ -102,6 +101,8 @@ ifeval::[{code}==1]
 	</ui:define>
 ----
 endif::[]
+
++
 
 ** per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail
 
@@ -152,7 +153,6 @@ ifeval::[{code}==1]
 	<perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" />
 ----
 endif::[]
---
 
 - *gestione di una sezione di notifiche e messaggi di errore*
 

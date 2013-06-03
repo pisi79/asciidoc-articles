@@ -790,25 +790,6 @@ il meccanismo di verifica previsto dal template Facelets viene valutato prima di
 </li>
 </ul></div>
 </li>
-</ul></div>
-<div class="listingblock">
-<div class="title">template.hxtml</div>
-<div class="content">
-<pre><tt>        &lt;f:event type="preRenderView"
-                listener="#{permissionController.checkRoles}" /&gt;
-
-        &lt;ui:insert name="roles"&gt;
-                &lt;f:attribute name="roles" value="ANY" /&gt;
-        &lt;/ui:insert&gt;</tt></pre>
-</div></div>
-<div class="listingblock">
-<div class="title">page.xhtml</div>
-<div class="content">
-<pre><tt>        &lt;ui:define name="roles"&gt;
-                &lt;f:attribute name="roles" value="ORDER_EDIT" /&gt;
-        &lt;/ui:define&gt;</tt></pre>
-</div></div>
-<div class="ulist"><ul>
 <li>
 <p>
 <strong>verifica dei permessi dell&#8217;utente corrente alla visione e/o utilizzo di specifici controlli e sezioni della pagina</strong>
@@ -821,18 +802,16 @@ ciascun componente può subordinare la propria visualizzazione a una o più ACL 
 </li>
 </ul></div>
 </li>
-</ul></div>
-<div class="listingblock">
-<div class="title">page.xhtml</div>
-<div class="content">
-<pre><tt>        &lt;h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm"&gt;
-                ...
-        &lt;/h:form&gt;</tt></pre>
-</div></div>
-<div class="ulist"><ul>
 <li>
 <p>
 <strong>gestione degli eventuali parametri presenti nella richiesta</strong>
+</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist"><ul>
+<li>
+<p>
+per permettere la navigazione tra maschere tramite link <strong>HTML</strong>
 </p>
 </li>
 <li>
@@ -840,81 +819,31 @@ ciascun componente può subordinare la propria visualizzazione a una o più ACL 
 per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail
 </p>
 </li>
-</ul></div>
-<div class="listingblock">
-<div class="title">mail.eml</div>
-<div class="content">
-<pre><tt>Buongiorno,
-
-l'ordine 5555677 è stato registrato.
-
-I dettagli dell'ordine sono visibili qui: http://yourapp.com/order-manager/view-order?orderId=5555677
-
-Cordiali saluti.</tt></pre>
-</div></div>
-<div class="ulist"><ul>
 <li>
 <p>
 per permettere la navigazione diretta tra pagine Web dell&#8217;applicazione mediante semplici link <strong>HTML</strong> (il template <strong>Facelets</strong> prevede che ciascuna maschera possa specificare quali parametri di navigazione recuperare e ne imposta il valore nei componenti desiderati tramite meccanismi JSF
 </p>
 </li>
-</ul></div>
-<div class="listingblock">
-<div class="title">page.xhtml</div>
-<div class="content">
-<pre><tt>        &lt;ui:define name="params"&gt;
-                &lt;f:metadata&gt;
-                        &lt;f:viewParam name="orderId"
-                                value="#{orderController.search.obj.id}" /&gt;
-                &lt;/f:metadata&gt;
-        &lt;/ui:define&gt;</tt></pre>
-</div></div>
-<div class="ulist"><ul>
 <li>
 <p>
 in funzione di tali parametri e/o delle ACL soddisfatte dall&#8217;utente, possono poi essere indicati da ciascuna maschera eventuali pattern di navigazione alternativi verso cui redirigere la richiesta corrente)
 </p>
 </li>
 </ul></div>
-<div class="listingblock">
-<div class="title">page.xhtml</div>
-<div class="content">
-<pre><tt>        &lt;perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" /&gt;</tt></pre>
 </div></div>
-<div class="ulist"><ul>
+</li>
 <li>
 <p>
 <strong>gestione di una sezione di notifiche e messaggi di errore</strong>
-*il layout specifica una area di visualizzazione dei messaggi di notifica ed errore che tutti i componenti e le maschere possono richiamare in qualsiasi momento; la gestione dell&#8217;aspetto e dell&#8217;integrazione di tale area con la grafica delle maschere è gestita in modo centralizzato e facilmente manutenibile dal layout grafico generale.
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+il layout specifica una area di visualizzazione dei messaggi di notifica ed errore che tutti i componenti e le maschere possono richiamare in qualsiasi momento; la gestione dell&#8217;aspetto e dell&#8217;integrazione di tale area con la grafica delle maschere è gestita in modo centralizzato e facilmente manutenibile dal layout grafico generale.
 </p>
 </li>
 </ul></div>
-<div class="listingblock">
-<div class="title">template.xhtml</div>
-<div class="content">
-<pre><tt>        &lt;style type="text/css"&gt;
-                .ui-growl {
-                        border-color: black
-                }
-
-                .ui-growl-item {
-                        color: black;
-                        background-color: gray;
-                        border-color: black;
-                }
-
-                .ui-growl-item-container {
-                        background-color: gray;
-                        border-color: black;
-                }
-        &lt;/style&gt;
-
-        ...
-        &lt;h:form id="global"&gt;
-                &lt;p:growl id="messages" /&gt;
-        &lt;/h:form&gt;</tt></pre>
-</div></div>
-<div class="ulist"><ul>
+</li>
 <li>
 <p>
 <strong>blocco dell&#8217;interazione utente mediante pannelli modali</strong>
@@ -927,12 +856,27 @@ in caso di specifiche tipologie di azioni o di latenza nella risposta del server
 </li>
 </ul></div>
 </li>
+<li>
+<p>
+<strong>verifica della presenza di dati nei campi di input prima di abbandonare la pagina corrente</strong>
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+vengono intercettate le navigazioni in uscita dalla pagina, effettuate sul browser tramite link diretti, pe avvisare l&#8217;utente di eventuali dati non confermati nei form della pagina attuale
+</p>
+</li>
+<li>
+<p>
+ciascuna maschera/pagina web puo' poi escludere tale comportamente semplicemente ridefinendo la sezione <tt>dirty-check</tt> del template
+</p>
+</li>
 </ul></div>
-<div class="listingblock">
-<div class="title">template.xhtml</div>
-<div class="content">
-<pre><tt>TODO</tt></pre>
-</div></div>
+</li>
+<li>
+<p>
+<strong>gestione della scadenza della sessione utente corrente</strong>
+</p>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -940,42 +884,62 @@ gestione della scadenza della sessione utente corrente e dell&#8217;avviso dell&
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>Sessioni di utilizzo</p></div>
-<div class="paragraph"><p>La gestione della logica server-side dietro alle maschere applicative avviene mediante componenti CDI e backing bean JSF.
-La gestione delle interazioni reciproche di tali componenti è tipicamente ottenuta con tecniche di inversione del controllo basate su iniezione delle dipendenze (non è il componente che ha bisogno di un altro a richiamarlo, ma il container in cui entrambi eseguono che “inietta” nel primo il riferimento al secondo) ed eventi (il componente che esegue un&#8217;operazione non notifica direttamente tutti gli altri componenti interessati, ma si limita a generare un evento alla cui gestione si registrano gli altri componenti, per poter poi provvedere autonomamente).</p></div>
-<div class="paragraph"><p>Il nostro tocco&#8230;</p></div>
-<div class="paragraph"><p>Tramite l&#8217;uso dei tipi generici introdotti a partire da Java 5, in ICT-Group abbiamo sviluppato un insieme di armature base per diversi tipi di componenti (con tempo di vita di richiesta, di sessione, con necessità di disegnare grafici, scheduling, ecc..), dette genericamente “Controller”, allo scopo di portare a fattor comune:
-- la associazione di uno specifico componente JSF di tipo Controller con il corrispondente tipo di dato da esso gestito: il componente finale si limita a dichiarare tale tipo e può introdurre, se necessario, logiche custom di accesso alle diverse parti del dato, sovrascrivendo la logica dell&#8217;armatura base
-- la logica di visualizzazione e gestione del dato, tramite standardizzazione dei pattern di navigazione tra le videate di ricerca, creazione, modifica, esportazione o wizard.
-- logica di ricerca e paginazione sulla base dei criteri di filtro specificati dall&#8217;utente, affiancando questi ultimi alla inizializzazione del componente sulla base delle caratteristiche dell&#8217;utente corrente, per permettere la selezione e visualizzazione dei soli dati per cui l&#8217;utente è abilitato (es: supporto ad applicazioni multicliente o all&#8217;accesso alle stesse maschere da parte di utenti con diversi ruoli applicativi), sulla base del suo profilo.
-- generazione di eventi per permettere la notifica di variazioni dei dati (es: aggiornamento degli elenchi e delle opzioni visualizzate da altri componenti dipendenti dai dati gestiti dal componente corrente)</p></div>
-<div class="paragraph"><p>Identificazione, Autorizzazione, Profilazione</p></div>
-<div class="paragraph"><p>Uso di moduli basati sulle specifiche JAAS per garantire l&#8217;accesso alle applicazioni mediante integrazione con diversi tipi di sistemi per la gestione dell&#8217;identità (IDM), quali ad esempio basi di dati, alberi LDAP, sistemi basati su CAS,  token Windows NTLM o altri tipi di single sign-on.</p></div>
-<div class="paragraph"><p>Il nostro tocco&#8230;</p></div>
-<div class="paragraph"><p>Poiché i tre aspetti dell&#8217;accesso a un&#8217;applicazione, riconoscimento dell' identità, del ruolo applicativo e del sottoinsieme di dati a cui un utente è abilitato (o profilato) sono spesso governati da logiche eterogenee, permettiamo la componibilità di moduli JAAS a cascata, ad esempio per permettere scenari quali:
-- riconoscimento dell&#8217;identità dell&#8217;utente mediante CAS o NTLM
-- riconoscimento del ruolo applicativo dell&#8217;utente verifica dell&#8217;appartenenza dell&#8217;utente a specifiche porzioni di un albero LDAP, dedicate a una particolare applicazione o dominio applicativo
-- associazione del ruolo o dei ruoli posseduti dall&#8217;utente con uno o piu' specifici oggetti del dominio applicativo (es: un dipartimento, un reparto, una area commerciale) e profilazione a priori dei dati accessibili all&#8217;utente mediante tale criterio di filtro.
-- accesso di tipo applicativo (machine-to-machine) da parte di altri sistemi informatici ai servizi esposti dalla applicazione, mediante tecniche di autenticazione alternative e/o tradizionali (WS-Security, Basic-Authentication classica basata su username e password, ecc..)</p></div>
-<div class="paragraph"><p>Orchestrazione e coordinamento della logica applicativa
-EJB, Timer (Quartz), JMS, ESB, &#8230; la nuova cosa di flower
-bla bla bla</p></div>
-<div class="paragraph"><p>Gestione della persistenza
-Tecniche di ORM basate sulle specifiche JPA2 e implementazione basata su Hibernate, con  transazionalità gestita a default dal container applicativo.
-Gestione dell&#8217;accesso fortemente concorrente ai dati mediante tecniche di lock pessimistico o ottimistico delle righe (con versionamento del dato).
-Possibilità di introdurre logiche custom di apertura e chiusura delle transazioni, nonché coordinamento di transazioni distribuite con basi dati di tipo XA.
-Utilizzo di accesso diretto al dato con query SQL native e/o basate sulle specifiche JDBC, per ottenere espressività, efficienza e/o gestione di scenari di inserimento/modifiche di tipo BULK.</p></div>
-<div class="paragraph"><p>Il nostro tocco&#8230;</p></div>
-<div class="paragraph"><p>Analogamente a quanto fatto a proposito delle armature basi (Controller) dei componenti JSF,  sviluppo di un armatura basa (Repository) per gestire l&#8217;associazione dei DAO di tipo EJB Stateless Session Bean ai diversi tipo di dato, mappati come EJB di Entity Bean.
-Integrazione immedaita di tale componente con il corrispondente Controller JSF, grazie alle logiche portate a fattore comune dalle classi base di entrambi i tipi di componente.</p></div>
-<div class="paragraph"><p>Adozione di pattern di ricerca e filtraggio dei dati tali da permettere lo scambio efficace dei criteri di filtro tra pagine web, controller jsf e repository ejb: l&#8217;oggetto di ricerca contiene istanze di esempio del tipo di dato da cercare, con i vari campi valorizzabili direttamente dalle maschere, per ricerche di tipo match diretto e ricerca con range
-L&#8217;uso di tale oggetto ricerca all&#8217;interno del repository può essere ricondotto a i criteria di JPA2, all&#8217;uso di query EJBQL o persino query native.
-Nel nostro caso portato a fattor comune la costruzione di query per l&#8217;uso di questo oggetto al fine di query di conteggio, query di selezione e raggruppamento (es: per reportistica o graficazione di valori).
-Ciascun componente di tipo Repository può introdurre customizzazioni di tale meccanismo per gestire casistitiche quali uso di flag per ricerche di sottoinsiemi di dati, uso di query innestate, gestione di conversioni e/o semantiche di ricerca specifiche di un particolare oggetto (da ridire).</p></div>
-<div class="paragraph"><p>Integrazione con altri sistemi e tecnologie</p></div>
-<div class="paragraph"><p>WS, REST, RMI, FTP, uso diretto di librerie..</p></div>
-<div class="paragraph"><p>Il nostro tocco&#8230;
-esempi</p></div>
+</li>
+<li>
+<p>
+<strong>correttezza del comportamento cross-browser delle maschere</strong>
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+la parte iniziale del template gestisce la corretta dichiarazione del DOCTYPE e l&#8217;inclusione delle shims necessarie per il supporto ad Internet Explorer, garantendo il rispetto della sintassi <strong>XHTML</strong>
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sessioni_di_utilizzo">Sessioni di utilizzo</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>L&#8217;implementazione della logica server-side dietro alle maschere applicative avviene mediante componenti <strong>CDI</strong> e backing bean <strong>JSF</strong>.</p></div>
+<div class="paragraph"><p>La gestione delle interazioni reciproche di tali componenti è ottenuta con tecniche di inversione del controllo basate su <em>iniezione delle dipendenze</em> (non è il componente che ha bisogno di un altro a richiamarlo, ma il container in cui entrambi eseguono che “inietta” nel primo il riferimento al secondo) ed <em>eventi</em> (il componente che esegue un&#8217;operazione non notifica direttamente tutti gli altri componenti interessati, ma si limita a generare un evento alla cui gestione si registrano gli altri componenti, per poter poi provvedere autonomamente).</p></div>
+<div class="sect2">
+<h3 id="_il_nostro_tocco_8230_2">Il nostro tocco&#8230;</h3>
+<div class="paragraph"><p>Tramite l&#8217;uso dei tipi generici introdotti a partire da Java 5 e la definizione di nuove annotazioni (es: <tt>@OwnRepository</tt>, <tt>@ViewPage</tt>, &#8230;), in ICT-Group abbiamo sviluppato un insieme di armature base per diversi tipi di componenti (con tempo di vita di richiesta, di sessione, con necessità di disegnare grafici, scheduling, ecc..), dette genericamente <em>“Controller”</em>, allo scopo di portare a fattor comune:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>la associazione di uno specifico componente JSF di tipo <em>"Controller"</em> con il corrispondente tipo di dato da esso gestito</strong>
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+il componente finale si limita a dichiarare tale tipo e può introdurre, se necessario, logiche custom di accesso alle diverse parti del dato, sovrascrivendo la logica dell&#8217;armatura base
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+la logica di visualizzazione e gestione del dato, tramite standardizzazione dei pattern di navigazione tra le videate di ricerca, creazione, modifica, esportazione o wizard.
+</p>
+</li>
+<li>
+<p>
+logica di ricerca e paginazione sulla base dei criteri di filtro specificati dall&#8217;utente, affiancando questi ultimi alla inizializzazione del componente sulla base delle caratteristiche dell&#8217;utente corrente, per permettere la selezione e visualizzazione dei soli dati per cui l&#8217;utente è abilitato (es: supporto ad applicazioni multicliente o all&#8217;accesso alle stesse maschere da parte di utenti con diversi ruoli applicativi), sulla base del suo profilo.
+</p>
+</li>
+<li>
+<p>
+generazione di eventi per permettere la notifica di variazioni dei dati (es: aggiornamento degli elenchi e delle opzioni visualizzate da altri componenti dipendenti dai dati gestiti dal componente corrente)
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+</li>
+</ul></div>
 </div>
 </div>
 </div>
@@ -983,7 +947,7 @@ esempi</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-05-27 18:12:42 CEST
+Last updated 2013-06-03 09:16:19 CEST
 </div>
 </div>
 </body>
