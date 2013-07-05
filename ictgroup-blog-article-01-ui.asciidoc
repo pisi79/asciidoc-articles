@@ -1,0 +1,251 @@
+= Sulle spalle dei giganti - Interfaccia utente
+
+Le interfacce grafiche delle nostre applicazioni fanno uso di tecnologie Web consolidate quali *HTML*, *DHTML*, *XHTML*, *Javascript*, *AJAX*, *JSON*, *CSS*, *Twitter Bootstrap*, *Facelets*, *JSF*. L'accesso alle applicazioni e il loro utilizzo è quindi garantito a qualunque terminale provvisto di un tradizionale browser (_IE_, _Firefox_, _Safari_, _Chrome_, _Opera_, ... ).
+
+La modellazione dei contenuti in *HTML* e *XHTML* permette una chiara strutturazione delle maschere di interazione e dei contenuti presentati. L'uso di funzioni *Javascript* permette di spostare secondo convenienza parte della logica applicativa o di presentazione direttamente sul terminale dell'utente. Lo scambio di richieste/risposte e dati con i server applicativi mediante tecnologia *AJAX* e/o formati *JSON* consentono di ottenere dinamismo ed alta efficienza nel recupero e nella gestione dei contenuti dinamici. Infine, l'uso di *CSS* e template grafici basati sugli strumenti di *Twitter Bootstrap* consente con facilità di adattare l'aspetto delle maschere alle caratteristiche ed esigenze dei diversi terminali utente, estendendo facilmente il supporto a dispositivi mobili o con capacità grafiche o dimensioni dello schermo particolarmente limitate. 
+
+La costruzione delle maschere per la visualizzazione e la gestione dei dati mediante pagine Web si basa su templating *Facelets* (struttura generale, divisione in sezioni, riutilizzo e combinazione di parti), componenti *JSF* standard (campi di input/output e controlli per la navigazione) e librerie open source aggiuntive quali *PrimeFaces* (presentazione tabellare, campi di inserimento e controlli avanzati, grafici) e *PrettyFaces* (URL semplificati e bookmarkabili).
+
+
+== Il nostro tocco...
+
+Il modello funzionale e di struttura grafica del layout realizzato in ICT-Group permette di portare a fattor comune per tutte le maschere dell'applicazione, le operazioni di:
+
+=== Verifica dei permessi dell'utente corrente per l'accesso alla pagina
+
+Il meccanismo di verifica previsto dal template Facelets viene valutato prima di ogni visualizzazione confrontando le caratteristiche dell'utente con la Access Control List, ACL,  specificata dalla pagina
+
+.template.hxtml
+----
+	<f:event type="preRenderView"
+		listener="#{permissionController.checkRoles}" />
+
+	<ui:insert name="roles">
+		<f:attribute name="roles" value="ANY" />
+	</ui:insert>
+----
+
+.page.xhtml
+----
+	<ui:define name="roles">
+		<f:attribute name="roles" value="ORDER_EDIT" />
+	</ui:define>
+----
+
+=== Verifica dei permessi dell'utente corrente alla visione e/o utilizzo di specifici controlli e sezioni della pagina
+
+Ciascun componente può subordinare la propria visualizzazione a una o più ACL e/o altre condizioni dinamiche
+
+.page.xhtml
+----
+	<h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm">
+		...
+	</h:form>
+----
+endif::[]
+
+=== Gestione degli eventuali parametri presenti nella richiesta
+
+Per permettere la navigazione tra maschere tramite link *HTML*:
+
+.template.xhtml
+----
+	<ui:insert name="params">
+	</ui:insert>
+----
+
+.page.xhtml
+----
+	<ui:define name="params">
+		<f:metadata>
+			<f:viewParam name="deviceId"
+				value="#{deviceController.search.obj.deviceId}" />
+		</f:metadata>
+	</ui:define>
+----
+
+Per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail:
+
+.pretty-config.xml
+----
+	<url-mapping id="orderView">
+		<pattern value="/gestore-ordini/vedi-ordine/#{orderController.element.id}" />
+		<action>#{orderController.viewCurrent}</action>
+		<view-id>/ordini/dettaglio.jsf</view-id>
+	</url-mapping>
+----
+
+.mail.eml
+----
+Buongiorno,
+
+l'ordine 5555677 è stato registrato.
+
+I dettagli dell'ordine sono visibili qui: http://yourapp.com/gestore-ordini/vedi-ordine/5555677
+
+Cordiali saluti.
+----
+
+Per permettere la navigazione diretta tra pagine Web dell'applicazione mediante semplici link *HTML* (il template *Facelets* prevede che ciascuna maschera possa specificare quali parametri di navigazione recuperare e ne imposta il valore nei componenti desiderati tramite meccanismi JSF:
+
+.page.xhtml
+----
+	<ui:define name="params">
+		<f:metadata>
+			<f:viewParam name="orderId"
+				value="#{orderController.search.obj.id}" />
+		</f:metadata>
+	</ui:define>
+----
+
+In funzione di tali parametri e/o delle ACL soddisfatte dall'utente, possono poi essere indicati da ciascuna maschera eventuali pattern di navigazione alternativi verso cui redirigere la richiesta corrente)
+
+.page.xhtml
+----
+	<perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" />
+----
+
+=== Gestione di una sezione di notifiche e messaggi di errore
+
+Il layout specifica una area di visualizzazione dei messaggi di notifica ed errore che tutti i componenti e le maschere possono richiamare in qualsiasi momento; la gestione dell'aspetto e dell'integrazione di tale area con la grafica delle maschere è gestita in modo centralizzato e facilmente manutenibile dal layout grafico generale.
+
+.template.xhtml
+----
+	<style type="text/css">
+		.ui-growl {
+			border-color: black
+		}
+
+		.ui-growl-item {
+			color: black;
+			background-color: gray;
+			border-color: black;
+		}
+
+		.ui-growl-item-container {
+			background-color: gray;
+			border-color: black;
+		}
+	</style>
+
+	...
+	<h:form id="global">
+		<p:growl id="messages" />
+	</h:form>
+----
+
+=== Blocco dell'interazione utente mediante pannelli modali
+
+In caso di specifiche tipologie di azioni o di latenza nella risposta del server, vengono intercettate le richieste AJAX, gli eventi DHTML e le navigazioni HTTP del browser, per permettere di impedire inserimenti e click ripetuti o semplicemente per non lasciare l'utente nel dubbio che uno specifico comando sia stato o meno recepito dall'applicazione
+
+.template.xhtml
+----
+	<ui:insert name="modalWait">
+		<p:ajaxStatus onstart="statusDialog.show();"
+			onsuccess="statusDialog.hide();" id="ajaxStatusPanel">
+			<f:facet name="start">
+			</f:facet>
+			<f:facet name="complete">
+				<h:outputText value="" />
+			</f:facet>
+		</p:ajaxStatus>
+	</ui:insert>
+----
+
+=== Verifica della presenza di dati nei campi di input prima di abbandonare la pagina corrente
+
+Vengono intercettate le navigazioni in uscita dalla pagina, effettuate sul browser tramite link diretti, pe avvisare l'utente di eventuali dati non confermati nei form della pagina attuale
+
+.template.xhtml
+----
+	<ui:insert name="dirty-check">
+		<script type="text/javascript">
+			$(function() {
+				// Set the unload message whenever any input element get changed.
+				$(':input').on('change', function() {
+					setConfirmUnload(true);
+				});
+
+				// Turn off the unload message whenever a form get submitted properly.
+				$('form').on('submit', function() {
+					setConfirmUnload(false);
+				});
+			});
+
+			function setConfirmUnload(on) {
+				var message = "Attenzione! Sono presenti dati non salvati. Vuoi veramente uscire?";
+				window.onbeforeunload = (on) ? function() {
+					return message;
+				} : null;
+			}
+		</script>
+	</ui:insert>
+----
+
+Ciascuna maschera/pagina web puo' poi escludere tale comportamente semplicemente ridefinendo la sezione +dirty-check+ del template:
+
+.page.xhtml
+----
+	<ui:define name="dirty-check">
+		<!-- skip dirty checking -->
+	</ui:insert>
+----
+
+=== Gestione della scadenza della sessione utente corrente
+
+Gestione della scadenza della sessione utente corrente e dell'avviso dell'avvicinarsi di tale termine (il modello funzionale delle maschere tiene sotto controllo lo scorrere del tempo e avvisa l'utente della necessità di salvare le operazioni correnti all'avvicinarsi dello scadere della sessione):
+
+.template.xhtml
+----
+	<ui:insert name="sessiontimeout">
+		<p:idleMonitor timeout="108000" onidle="idleDialog.show();"
+			onactive="idleDialog.hide();" />
+		<p:dialog header="Cosa Succede?" resizable="false"
+			widgetVar="idleDialog" modal="true" width="400">
+			<h:outputText
+				value="Sei ancora al monitor? Salva per evitare di perdere il tuo lavoro!" />
+		</p:dialog>
+	</ui:insert>
+----
+
+=== Correttezza del comportamento cross-browser delle maschere
+
+La parte iniziale del template gestisce la corretta dichiarazione del DOCTYPE e l'inclusione delle shims necessarie per il supporto ad Internet Explorer, garantendo il rispetto della sintassi *XHTML*:
+
+.template.xhtml
+----
+<!DOCTYPE html>
+<f:view contentType="text/html" encoding="UTF-8"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:base="http://www.ict-group.it/commons2/base"
+	xmlns:perm="http://www.ict-group.it/commons2/permissions"
+	xmlns:form="http://www.ict-group.it/commons2/form">
+
+	<h:outputText escape="false"
+		value="&lt;!--[if lt IE 7 ]&gt; &lt;html class='ie ie6' lang='it'&gt; &lt;![endif]--&gt;" />
+	<h:outputText escape="false"
+		value="&lt;!--[if IE 7 ]&gt; &lt;html class='ie ie7' lang='it'&gt; &lt;![endif]--&gt;" />
+	<h:outputText escape="false"
+		value="&lt;!--[if IE 8 ]&gt; &lt;html class='ie ie8' lang='it'&gt; &lt;![endif]--&gt;" />
+
+	<h:outputText escape="false"
+		value="&lt;!--[if (gte IE 9)|!(IE)]&gt;&lt;!--&gt;" />
+	<html lang="it">
+<h:outputText escape="false" value="&lt;!--&lt;![endif]--&gt;" />
+
+	...
+
+	<h:head>
+		...
+		<h:outputStylesheet library="css" name="font-awesome.css" target="head" />
+		<h:outputText escape="false"
+		value="&lt;!--[if IE 7 ]&gt; &lt;link rel='stylesheet' href='assets/css/font-awesome-ie7.min.css' &gt; &lt;![endif]--&gt;" />
+		...
+----
+
+

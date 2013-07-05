@@ -1,0 +1,222 @@
+= Sulle spalle dei giganti - Sessioni di utilizzo
+
+L'implementazione della logica server-side dietro alle maschere applicative avviene mediante componenti *CDI* e backing bean *JSF*.
+
+La gestione delle interazioni reciproche di tali componenti è ottenuta con tecniche di inversione del controllo basate su _iniezione delle dipendenze_ (non è il componente che ha bisogno di un altro a richiamarlo, ma il container in cui entrambi eseguono che “inietta” nel primo il riferimento al secondo) ed _eventi_ (il componente che esegue un'operazione non notifica direttamente tutti gli altri componenti interessati, ma si limita a generare un evento alla cui gestione si registrano gli altri componenti, per poter poi provvedere autonomamente).
+
+== Il nostro tocco...
+
+Tramite l'uso dei tipi generici introdotti a partire da Java 5 e la definizione di nuove annotazioni (es: +@OwnRepository+, +@ViewPage+, ...), in ICT-Group abbiamo sviluppato un insieme di armature base per diversi tipi di componenti (con tempo di vita di richiesta, di sessione, con necessità di disegnare grafici, scheduling, ecc..), dette genericamente _“Controller”_, allo scopo di portare a fattor comune gli aspetti di seguito descritti.
+
+=== Associazione di uno specifico componente JSF (detto _"Controller"_) con il corrispondente tipo di dato da esso gestito
+
+Il componente finale si limita a dichiarare tale tipo e può introdurre, se necessario, logiche custom di accesso alle diverse parti del dato, sovrascrivendo la logica dell'armatura base
+
+.OrderController.java
+----
+@Named
+@SessionScoped
+public class OrderController extends AbstractLazyController<Order>
+{
+	/**
+	 * Minima customizzazione di un componente di tipo lazy controller
+	 */
+	@Inject
+	@OwnRepository(OrderRepository.class)
+	OrderRepository orderRepository;
+}
+----
+
+=== Logica di visualizzazione e gestione del dato
+
+Standardizzazione dei pattern di navigazione tra le videate di ricerca, creazione, modifica, esportazione o wizard.
+
+.AbstractLazyController.java
+----
+	...
+	public static final String REDIRECT_PARAM = "?faces-redirect=true";
+
+	@PostConstruct
+	public void init() {
+		injectRepositoryAndPages();
+		...
+	}
+
+	private T element;
+	private LocalLazyDataModel<T> model;
+
+	public String viewCurrent() {
+		// fetch dei dati
+		element = getRepository().fetch(getId(element));
+		...
+		// vista di arrivo
+		return viewPage();
+	}
+
+	public String modCurrent() {
+		...
+		return editPage();
+	}
+
+	public String update() {
+		try {
+			...
+
+			// salvataggio
+			getRepository().update(element);
+
+			// refresh dati
+			...
+			refreshModel();
+
+			// vista di arrivo
+			return listPage();
+
+		} catch (Exception exc) {
+			return editPageNoRedirect();
+		}
+	}
+----
+
+.OrderController.java
+----
+@Named
+@SessionScoped
+public class OrderController extends AbstractLazyController<Order>
+{
+	...
+	
+	@ViewPage
+	protected static final String VIEW_PAGE = "/ordini/dettaglio.xhtml";
+
+	@EditPage
+	protected static final String EDIT_PAGE = "/ordini/modifica.xhtml";
+
+	@ListPage
+	protected static final String LIST_PAGE = "/ordini/lista.xhtml";
+}
+----
+
+=== Logica di profilazione, ricerca e paginazione dei risultati
+
+Recupero dei criteri di filtro specificati dall'utente, affiancando questi ultimi a quelli  usati per inizializzare il componente sulla base del profilo dell'utente stesso, per permettere la selezione e visualizzazione dei soli dati per cui l'utente è abilitato (es: supporto ad applicazioni multicliente o all'accesso alle stesse maschere da parte di utenti con diversi ruoli applicativi)
+
+.AbstractLazyController.java
+----
+	...
+	public static final String REDIRECT_PARAM = "?faces-redirect=true";
+
+	@PostConstruct
+	public void init() {
+		...
+		defaultCriteria();
+	}
+
+	private Search<T> search;
+	private LocalLazyDataModel<T> model;
+
+	public void refreshModel() {
+		setModel(new LocalLazyDataModel<T>(search, getRepository()));
+	}
+----
+
+.OrderController.java
+----
+@Named
+@SessionScoped
+public class OrderController extends AbstractLazyController<Order>
+{
+	...
+	
+	@Inject
+	LoginController loginController;
+
+	@Override
+	public void defaultCriteria()
+	{
+		getSearch().getObj().setUser(loginController.getUser().getId());
+		getSearch().getFrom().setData(ultimi6mesi());
+	}
+
+}
+----
+
+=== Generazione di eventi per permettere la notifica di variazioni dei dati
+
+Esempio: aggiornamento degli elenchi e delle opzioni visualizzate da altri componenti dipendenti dai dati gestiti dal componente corrente) 
+
+.UpdateEvent.java
+----
+public class UpdatedEvent<T>
+{
+	protected T obj;
+
+	...
+
+	public T getObj()
+	{
+		return obj;
+	}
+
+}
+----
+
+.PropertiesProducer.java
+----
+	...
+	@Inject
+	TipologieProdottiRepository tipologieProdottiRepository;
+	
+	@SuppressWarnings("rawtypes")
+	private Map<Class, SelectItem[]> items = new HashMap<Class,SelectItem[]>();
+
+	@Produces
+	@Named
+	public SelectItem[] getTipologieProdottiItems() {
+		Search<TipologiaProdotto> search = new Search<TipologiaProdotto>(TipologiaProdotto.class);
+		search.getObj().setFavourtes(loginController.getUser().getFavourites());
+		return checkItems(search, tipologieProdottiRepository, "id", "nome",
+				"nessuna tipologia disponibile", "tipologia...");
+	}
+
+	private SelectItem[] checkItems(Search<T> searcg, Repository<T> ejb,
+			String idField, String valueField, String emptyMessage,
+			String labelMessage) {
+		Class clazz = search.getObj().getClass();
+		if (items.get(clazz) == null || items.get(clazz).length == 0) {
+			items.put(clazz, setupItems(search, ejb, idField,
+					valueField, emptyMessage, labelMessage));
+		}
+		return items.get(clazz);
+	}
+
+	@Override
+	public void observeUpdate(@Observes UpdatedEvent updatedEvent)
+	{
+		items.put(updatedEvent.getObj().getClass(),null);
+	}
+----
+
+.AbstractLazyController.java
+----
+	...
+	@Inject
+	Event<UpdatedEvent> updatedEvent;
+
+	public String update() {
+		...
+
+		// salvataggio
+		getRepository().update(element);
+
+		// refresh dati
+		updatedEvent.fire(new UpdatedEvent(element));
+		
+		...
+	}
+----
+
+.OrderController.java
+----
+	// niente da implementare
+----

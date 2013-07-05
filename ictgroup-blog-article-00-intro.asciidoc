@@ -1,0 +1,64 @@
+= Sulle spalle dei giganti
+
+Il principale stack tecnologico adottato per lo sviluppo in ICT-Group è centrato attorno alle specifiche *Java EE* (http://www.oracle.com/technetwork/java/javaee/overview/index.html) con l'obiettivo di:
+
+- aderire a standard di qualità e compatibilità, quali le Java Specification Request (JSR) promosse dal Java Community Process (JCP)
+
+- adottare tutte le più recenti tecniche di programmazione, quali l'uso di metacodice (Annotations on Java Types), iniezione di dipendenze (Contexts and Dependency Injection, CDI)
+
+- garantire leggibilità, omogeneità e semplicità del codice prodotto
+
+- ottenere modularità e manutenibilità
+
+La maggior parte delle applicazioni realizzate sono dunque applicazioni di tipo Enterprise, in esecuzione all'interno di un Application Server. 
+Il server scelto da ICT-Group per le installazioni correnti è _RedHat JBossAS_ (http://www.jboss.org/overview/) con possibilità di downscale delle funzionalità realizzate per permettere l'esecuzione su Web Server tradizionali e/o legacy quali _Apache Tomcat_ (http://tomcat.apache.org/).
+
+*_Sulla base di tali tecnologie, in ICT-Group abbiamo quindi sviluppato un insieme di strumenti e librerie di supporto aventi lo scopo di portare a fattore comune la gestione di moltissime problematiche ricorrenti nello sviluppo di applicazioni web e sistemi distribuiti_*
+
+Gli aspetti intorno ai quali si sono concentrati i nostri sforzi di ingegnerizzazione riguardano, trasversalmente, tutti gli elementi dello stack tecnologico e 
+dell'interazione tra utente, applicazione e dato.
+
+Una semplice suddivisione funzionale di tali aspetti, su ciascuno dei quali il blog si concentrera' con maggiore dettaglio nelle prossime settimane, puo' essere tracciata con riferimento ai concetti di:
+
+.Interfaccia utente
+
+** modularizzazione
+** autorizzazione e profilazione
+** pattern di navigazione
+** ecc...
+
+.Sessioni di utilizzo
+
+** logica di visualizzazione e gestione del dato
+** filtraggio e ricerca
+** gestione degli eventi
+** ecc...
+
+.Gestione della persistenza
+
+** armature Data Access Object (DAO)
+** costruzione dei criteri di ricerca
+** flessibilita' e customizzazioni
+** ecc...
+
+.Identificazione, Autorizzazione, Profilazione
+
+** architettura modulare
+** componibilita'
+** ecc...
+
+.Orchestrazione e coordinamento della logica applicativa
+
+** orchestrazione mediante Enterpris JavaBeans (EJB) di tipo Stateless, Stateful o ESB
+** elaborazioni massive e/o asincrone tramite code di messaggi 
+** pianificazione di operazioni periodiche o spot tramite timer
+** ecc...
+
+.Integrazione con altri sistemi e tecnologie
+
+** integrazione con tecnologie tradizionali quali WebServices, server FTP, alberi LDAP, ...
+** integrazione tramite tecnologie REST e JSON
+** uso di nuove tecnologie per re-implementare interfacce WSDL esistenti
+** ecc...
+
+
