@@ -740,7 +740,8 @@ asciidoc.install();
 <div id="content">
 <div id="preamble">
 <div class="sectionbody">
-<div class="paragraph"><p>Le interfacce grafiche delle nostre applicazioni fanno uso di tecnologie Web consolidate quali <strong>HTML</strong>, <strong>DHTML</strong>, <strong>XHTML</strong>, <strong>Javascript</strong>, <strong>AJAX</strong>, <strong>JSON</strong>, <strong>CSS</strong>, <strong>Twitter Bootstrap</strong>, <strong>Facelets</strong>, <strong>JSF</strong>. L&#8217;accesso alle applicazioni e il loro utilizzo è quindi garantito a qualunque terminale provvisto di un tradizionale browser (<em>IE</em>, <em>Firefox</em>, <em>Safari</em>, <em>Chrome</em>, <em>Opera</em>, &#8230; ).</p></div>
+<div class="paragraph"><p>L&#8217;accesso alle applicazioni e il loro utilizzo è garantito a qualunque terminale provvisto di un tradizionale browser (<em>IE</em>, <em>Firefox</em>, <em>Safari</em>, <em>Chrome</em>, <em>Opera</em>, ecc&#8230; ).
+Le interfacce grafiche delle nostre applicazioni fanno infatti uso di tecnologie Web e standard  consolidati quali <strong>HTML</strong>, <strong>DHTML</strong>, <strong>XHTML</strong>, <strong>Javascript</strong>, <strong>AJAX</strong>, <strong>JSON</strong>, <strong>CSS</strong>, <strong>Twitter Bootstrap</strong>, <strong>Facelets</strong>, <strong>JSF</strong>.</p></div>
 <div class="paragraph"><p>La modellazione dei contenuti in <strong>HTML</strong> e <strong>XHTML</strong> permette una chiara strutturazione delle maschere di interazione e dei contenuti presentati. L&#8217;uso di funzioni <strong>Javascript</strong> permette di spostare secondo convenienza parte della logica applicativa o di presentazione direttamente sul terminale dell&#8217;utente. Lo scambio di richieste/risposte e dati con i server applicativi mediante tecnologia <strong>AJAX</strong> e/o formati <strong>JSON</strong> consentono di ottenere dinamismo ed alta efficienza nel recupero e nella gestione dei contenuti dinamici. Infine, l&#8217;uso di <strong>CSS</strong> e template grafici basati sugli strumenti di <strong>Twitter Bootstrap</strong> consente con facilità di adattare l&#8217;aspetto delle maschere alle caratteristiche ed esigenze dei diversi terminali utente, estendendo facilmente il supporto a dispositivi mobili o con capacità grafiche o dimensioni dello schermo particolarmente limitate.</p></div>
 <div class="paragraph"><p>La costruzione delle maschere per la visualizzazione e la gestione dei dati mediante pagine Web si basa su templating <strong>Facelets</strong> (struttura generale, divisione in sezioni, riutilizzo e combinazione di parti), componenti <strong>JSF</strong> standard (campi di input/output e controlli per la navigazione) e librerie open source aggiuntive quali <strong>PrimeFaces</strong> (presentazione tabellare, campi di inserimento e controlli avanzati, grafici) e <strong>PrettyFaces</strong> (URL semplificati e bookmarkabili).</p></div>
 </div>
@@ -748,26 +749,48 @@ asciidoc.install();
 <div class="sect1">
 <h2 id="_il_nostro_tocco_8230">Il nostro tocco&#8230;</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Il modello funzionale e di struttura grafica del layout realizzato in ICT-Group permette di portare a fattor comune per tutte le maschere dell&#8217;applicazione, le operazioni di:</p></div>
+<div class="paragraph"><p>Il modello funzionale e di struttura grafica del layout da noi realizzato permette di portare a fattor comune per tutte le maschere dell&#8217;applicazione, le operazioni di seguito descritte.</p></div>
 <div class="sect2">
 <h3 id="_verifica_dei_permessi_dell_8217_utente_corrente_per_l_8217_accesso_alla_pagina">Verifica dei permessi dell&#8217;utente corrente per l&#8217;accesso alla pagina</h3>
 <div class="paragraph"><p>Il meccanismo di verifica previsto dal template Facelets viene valutato prima di ogni visualizzazione confrontando le caratteristiche dell&#8217;utente con la Access Control List, ACL,  specificata dalla pagina</p></div>
 <div class="listingblock">
-<div class="title">template.hxtml</div>
+<div class="title">template.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;f:event type="preRenderView"
-                listener="#{permissionController.checkRoles}" /&gt;
+<pre><tt>        &lt;f:view contentType="text/html" encoding="UTF-8"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:c="http://java.sun.com/jsp/jstl/core"
+                xmlns:f="http://java.sun.com/jsf/core"
+                ...
+        &gt;
 
-        &lt;ui:insert name="roles"&gt;
-                &lt;f:attribute name="roles" value="ANY" /&gt;
-        &lt;/ui:insert&gt;</tt></pre>
+                &lt;f:event type="preRenderView"
+                        listener="#{permissionController.checkRoles}" /&gt;
+
+                &lt;ui:insert name="roles"&gt;
+                        &lt;f:attribute name="roles" value="ANY" /&gt;
+                &lt;/ui:insert&gt;
+
+                ...</tt></pre>
 </div></div>
 <div class="listingblock">
 <div class="title">page.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;ui:define name="roles"&gt;
-                &lt;f:attribute name="roles" value="ORDER_EDIT" /&gt;
-        &lt;/ui:define&gt;</tt></pre>
+<pre><tt>        &lt;ui:composition template="/WEB-INF/layout/template.xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:c="http://java.sun.com/jsp/jstl/core"
+                xmlns:p="http://primefaces.org/ui"
+                ...
+        &gt;
+
+                &lt;ui:define name="roles"&gt;
+                        &lt;f:attribute name="roles" value="ORDER_EDIT" /&gt;
+                &lt;/ui:define&gt;
+
+                ...</tt></pre>
 </div></div>
 </div>
 <div class="sect2">
@@ -776,9 +799,13 @@ asciidoc.install();
 <div class="listingblock">
 <div class="title">page.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm"&gt;
-                ...
-        &lt;/h:form&gt;</tt></pre>
+<pre><tt>                ...
+
+                &lt;h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm"&gt;
+                        ...
+                &lt;/h:form&gt;
+
+                ...</tt></pre>
 </div></div>
 </div>
 <div class="sect2">
@@ -787,28 +814,40 @@ asciidoc.install();
 <div class="listingblock">
 <div class="title">template.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;ui:insert name="params"&gt;
-        &lt;/ui:insert&gt;</tt></pre>
+<pre><tt>                ...
+
+                &lt;ui:insert name="params"&gt;
+                &lt;/ui:insert&gt;
+
+                ...</tt></pre>
 </div></div>
 <div class="listingblock">
 <div class="title">page.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;ui:define name="params"&gt;
-                &lt;f:metadata&gt;
-                        &lt;f:viewParam name="deviceId"
-                                value="#{deviceController.search.obj.deviceId}" /&gt;
-                &lt;/f:metadata&gt;
-        &lt;/ui:define&gt;</tt></pre>
+<pre><tt>                ...
+
+                &lt;ui:define name="params"&gt;
+                        &lt;f:metadata&gt;
+                                &lt;f:viewParam name="deviceId"
+                                        value="#{deviceController.search.obj.deviceId}" /&gt;
+                        &lt;/f:metadata&gt;
+                &lt;/ui:define&gt;
+
+                ...</tt></pre>
 </div></div>
-<div class="paragraph"><p>Per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail:</p></div>
+<div class="paragraph"><p>Per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail e cliccabili per accedere direttamente al dato di interesse:</p></div>
 <div class="listingblock">
 <div class="title">pretty-config.xml</div>
 <div class="content">
-<pre><tt>        &lt;url-mapping id="orderView"&gt;
-                &lt;pattern value="/gestore-ordini/vedi-ordine/#{orderController.element.id}" /&gt;
+<pre><tt>        ...
+
+        &lt;url-mapping id="orderView"&gt;
+                &lt;pattern value="/gestore-ordini/vedi-ordine/#   {orderController.element.id}" /&gt;
                 &lt;action&gt;#{orderController.viewCurrent}&lt;/action&gt;
                 &lt;view-id&gt;/ordini/dettaglio.jsf&lt;/view-id&gt;
-        &lt;/url-mapping&gt;</tt></pre>
+        &lt;/url-mapping&gt;
+
+        ...</tt></pre>
 </div></div>
 <div class="listingblock">
 <div class="title">mail.eml</div>
@@ -825,18 +864,29 @@ Cordiali saluti.</tt></pre>
 <div class="listingblock">
 <div class="title">page.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;ui:define name="params"&gt;
-                &lt;f:metadata&gt;
-                        &lt;f:viewParam name="orderId"
-                                value="#{orderController.search.obj.id}" /&gt;
-                &lt;/f:metadata&gt;
-        &lt;/ui:define&gt;</tt></pre>
+<pre><tt>                ...
+
+                &lt;ui:define name="params"&gt;
+                        &lt;f:metadata&gt;
+                                &lt;f:viewParam name="orderId"
+                                        value="#{orderController.search.obj.id}" /&gt;
+                        &lt;/f:metadata&gt;
+                &lt;/ui:define&gt;
+
+                ...</tt></pre>
 </div></div>
 <div class="paragraph"><p>In funzione di tali parametri e/o delle ACL soddisfatte dall&#8217;utente, possono poi essere indicati da ciascuna maschera eventuali pattern di navigazione alternativi verso cui redirigere la richiesta corrente)</p></div>
 <div class="listingblock">
 <div class="title">page.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" /&gt;</tt></pre>
+<pre><tt>        &lt;ui:composition ...
+                xmlns:perm="http://www.ict-group.it/commons2/permissions"
+                ...
+        &gt;
+
+                &lt;perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" /&gt;
+
+                ...</tt></pre>
 </div></div>
 </div>
 <div class="sect2">
@@ -845,27 +895,35 @@ Cordiali saluti.</tt></pre>
 <div class="listingblock">
 <div class="title">template.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;style type="text/css"&gt;
-                .ui-growl {
-                        border-color: black
-                }
+<pre><tt>        &lt;f:view ...
+                xmlns:p="http://primefaces.org/ui"
+                ...
+        &gt;
 
-                .ui-growl-item {
-                        color: black;
-                        background-color: gray;
-                        border-color: black;
-                }
+                &lt;style type="text/css"&gt;
+                        .ui-growl {
+                                border-color: black
+                        }
 
-                .ui-growl-item-container {
-                        background-color: gray;
-                        border-color: black;
-                }
-        &lt;/style&gt;
+                        .ui-growl-item {
+                                color: black;
+                                background-color: gray;
+                                border-color: black;
+                        }
 
-        ...
-        &lt;h:form id="global"&gt;
-                &lt;p:growl id="messages" /&gt;
-        &lt;/h:form&gt;</tt></pre>
+                        .ui-growl-item-container {
+                                background-color: gray;
+                                border-color: black;
+                        }
+                &lt;/style&gt;
+
+                ...
+
+                &lt;h:form id="global"&gt;
+                        &lt;p:growl id="messages" /&gt;
+                &lt;/h:form&gt;
+
+                ...</tt></pre>
 </div></div>
 </div>
 <div class="sect2">
@@ -874,16 +932,20 @@ Cordiali saluti.</tt></pre>
 <div class="listingblock">
 <div class="title">template.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;ui:insert name="modalWait"&gt;
-                &lt;p:ajaxStatus onstart="statusDialog.show();"
-                        onsuccess="statusDialog.hide();" id="ajaxStatusPanel"&gt;
-                        &lt;f:facet name="start"&gt;
-                        &lt;/f:facet&gt;
-                        &lt;f:facet name="complete"&gt;
-                                &lt;h:outputText value="" /&gt;
-                        &lt;/f:facet&gt;
-                &lt;/p:ajaxStatus&gt;
-        &lt;/ui:insert&gt;</tt></pre>
+<pre><tt>                ...
+
+                &lt;ui:insert name="modalWait"&gt;
+                        &lt;p:ajaxStatus onstart="statusDialog.show();"
+                                onsuccess="statusDialog.hide();" id="ajaxStatusPanel"&gt;
+                                &lt;f:facet name="start"&gt;
+                                &lt;/f:facet&gt;
+                                &lt;f:facet name="complete"&gt;
+                                        &lt;h:outputText value="" /&gt;
+                                &lt;/f:facet&gt;
+                        &lt;/p:ajaxStatus&gt;
+                &lt;/ui:insert&gt;
+
+                ...</tt></pre>
 </div></div>
 </div>
 <div class="sect2">
@@ -892,36 +954,44 @@ Cordiali saluti.</tt></pre>
 <div class="listingblock">
 <div class="title">template.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;ui:insert name="dirty-check"&gt;
-                &lt;script type="text/javascript"&gt;
-                        $(function() {
-                                // Set the unload message whenever any input element get changed.
-                                $(':input').on('change', function() {
-                                        setConfirmUnload(true);
+<pre><tt>                ...
+
+                &lt;ui:insert name="dirty-check"&gt;
+                        &lt;script type="text/javascript"&gt;
+                                $(function() {
+                                        // Set the unload message whenever any input element get        changed.
+                                        $(':input').on('change', function() {
+                                                setConfirmUnload(true);
+                                        });
+
+                                        // Turn off the unload message whenever a form get submitted properly.
+                                        $('form').on('submit', function() {
+                                                setConfirmUnload(false);
+                                        });
                                 });
 
-                                // Turn off the unload message whenever a form get submitted properly.
-                                $('form').on('submit', function() {
-                                        setConfirmUnload(false);
-                                });
-                        });
+                                function setConfirmUnload(on) {
+                                        var message = "Attenzione! Sono presenti dati non salvati. Vuoi veramente uscire?";
+                                        window.onbeforeunload = (on) ? function() {
+                                                return message;
+                                        } : null;
+                                }
+                        &lt;/script&gt;
+                &lt;/ui:insert&gt;
 
-                        function setConfirmUnload(on) {
-                                var message = "Attenzione! Sono presenti dati non salvati. Vuoi veramente uscire?";
-                                window.onbeforeunload = (on) ? function() {
-                                        return message;
-                                } : null;
-                        }
-                &lt;/script&gt;
-        &lt;/ui:insert&gt;</tt></pre>
+                ...</tt></pre>
 </div></div>
 <div class="paragraph"><p>Ciascuna maschera/pagina web puo' poi escludere tale comportamente semplicemente ridefinendo la sezione <tt>dirty-check</tt> del template:</p></div>
 <div class="listingblock">
 <div class="title">page.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;ui:define name="dirty-check"&gt;
-                &lt;!-- skip dirty checking --&gt;
-        &lt;/ui:insert&gt;</tt></pre>
+<pre><tt>                ...
+
+                &lt;ui:define name="dirty-check"&gt;
+                        &lt;!-- skip dirty checking --&gt;
+                &lt;/ui:insert&gt;
+
+                ...</tt></pre>
 </div></div>
 </div>
 <div class="sect2">
@@ -930,15 +1000,19 @@ Cordiali saluti.</tt></pre>
 <div class="listingblock">
 <div class="title">template.xhtml</div>
 <div class="content">
-<pre><tt>        &lt;ui:insert name="sessiontimeout"&gt;
-                &lt;p:idleMonitor timeout="108000" onidle="idleDialog.show();"
-                        onactive="idleDialog.hide();" /&gt;
-                &lt;p:dialog header="Cosa Succede?" resizable="false"
-                        widgetVar="idleDialog" modal="true" width="400"&gt;
-                        &lt;h:outputText
-                                value="Sei ancora al monitor? Salva per evitare di perdere il tuo lavoro!" /&gt;
-                &lt;/p:dialog&gt;
-        &lt;/ui:insert&gt;</tt></pre>
+<pre><tt>                ...
+
+                &lt;ui:insert name="sessiontimeout"&gt;
+                        &lt;p:idleMonitor timeout="108000" onidle="idleDialog.show();"
+                                onactive="idleDialog.hide();" /&gt;
+                        &lt;p:dialog header="Cosa Succede?" resizable="false"
+                                widgetVar="idleDialog" modal="true" width="400"&gt;
+                                &lt;h:outputText
+                                        value="Sei ancora al monitor? Salva per evitare di perdere il tuo lavoro!" /&gt;
+                        &lt;/p:dialog&gt;
+                &lt;/ui:insert&gt;
+
+                ...</tt></pre>
 </div></div>
 </div>
 <div class="sect2">
@@ -947,38 +1021,43 @@ Cordiali saluti.</tt></pre>
 <div class="listingblock">
 <div class="title">template.xhtml</div>
 <div class="content">
-<pre><tt>&lt;!DOCTYPE html&gt;
-&lt;f:view contentType="text/html" encoding="UTF-8"
-        xmlns="http://www.w3.org/1999/xhtml"
-        xmlns:ui="http://java.sun.com/jsf/facelets"
-        xmlns:p="http://primefaces.org/ui"
-        xmlns:h="http://java.sun.com/jsf/html"
-        xmlns:c="http://java.sun.com/jsp/jstl/core"
-        xmlns:f="http://java.sun.com/jsf/core"
-        xmlns:base="http://www.ict-group.it/commons2/base"
-        xmlns:perm="http://www.ict-group.it/commons2/permissions"
-        xmlns:form="http://www.ict-group.it/commons2/form"&gt;
+<pre><tt>        &lt;!DOCTYPE html&gt;
 
-        &lt;h:outputText escape="false"
-                value="&amp;lt;!--[if lt IE 7 ]&amp;gt; &amp;lt;html class='ie ie6' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
-        &lt;h:outputText escape="false"
-                value="&amp;lt;!--[if IE 7 ]&amp;gt; &amp;lt;html class='ie ie7' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
-        &lt;h:outputText escape="false"
-                value="&amp;lt;!--[if IE 8 ]&amp;gt; &amp;lt;html class='ie ie8' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+        &lt;f:view contentType="text/html" encoding="UTF-8"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:c="http://java.sun.com/jsp/jstl/core"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:base="http://www.ict-group.it/commons2/base"
+                xmlns:perm="http://www.ict-group.it/commons2/permissions"
+                xmlns:form="http://www.ict-group.it/commons2/form"&gt;
 
-        &lt;h:outputText escape="false"
-                value="&amp;lt;!--[if (gte IE 9)|!(IE)]&amp;gt;&amp;lt;!--&amp;gt;" /&gt;
-        &lt;html lang="it"&gt;
-&lt;h:outputText escape="false" value="&amp;lt;!--&amp;lt;![endif]--&amp;gt;" /&gt;
-
-        ...
-
-        &lt;h:head&gt;
-                ...
-                &lt;h:outputStylesheet library="css" name="font-awesome.css" target="head" /&gt;
                 &lt;h:outputText escape="false"
-                value="&amp;lt;!--[if IE 7 ]&amp;gt; &amp;lt;link rel='stylesheet' href='assets/css/font-awesome-ie7.min.css' &amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
-                ...</tt></pre>
+                        value="&amp;lt;!--[if lt IE 7 ]&amp;gt; &amp;lt;html class='ie ie6' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+                &lt;h:outputText escape="false"
+                        value="&amp;lt;!--[if IE 7 ]&amp;gt; &amp;lt;html class='ie ie7' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+                &lt;h:outputText escape="false"
+                        value="&amp;lt;!--[if IE 8 ]&amp;gt; &amp;lt;html class='ie ie8' lang='it'&amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+
+                &lt;h:outputText escape="false"
+                        value="&amp;lt;!--[if (gte IE 9)|!(IE)]&amp;gt;&amp;lt;!--&amp;gt;" /&gt;
+                &lt;html lang="it"&gt;
+
+                &lt;h:outputText escape="false" value="&amp;lt;!--&amp;lt;![endif]--&amp;gt;" /&gt;
+
+                        ...
+
+                        &lt;h:head&gt;
+
+                                ...
+
+                                &lt;h:outputStylesheet library="css" name="font-awesome.css" target="head" /&gt;
+
+                                &lt;h:outputText escape="false" value="&amp;lt;!--[if IE 7 ]&amp;gt; &amp;lt;link rel='stylesheet' href='assets/css/font-awesome-ie7.min.css' &amp;gt; &amp;lt;![endif]--&amp;gt;" /&gt;
+
+                                ...</tt></pre>
 </div></div>
 </div>
 </div>
@@ -987,7 +1066,7 @@ Cordiali saluti.</tt></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-06-24 09:05:12 CEST
+Last updated 2013-08-09 08:51:49 CEST
 </div>
 </div>
 </body>

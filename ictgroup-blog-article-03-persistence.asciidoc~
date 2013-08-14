@@ -1,0 +1,837 @@
+= Sulle spalle dei giganti - Gestione della persistenza
+
+Tecniche di Object Relational Mapping (ORM) basate sulle specifiche *JPA2* e implementazione basata su *Hibernate*, con  transazionalità gestita a default dal container applicativo.
+
+Gestione dell'accesso fortemente concorrente ai dati mediante tecniche di lock pessimistico o ottimistico delle righe (con versionamento del dato).
+
+Possibilità di introdurre logiche custom di apertura e chiusura delle transazioni, nonché coordinamento di transazioni distribuite con basi dati di tipo *XA*.
+
+Utilizzo di accesso diretto al dato con query SQL native e/o basate sulle specifiche *JDBC*, per ottenere espressività, efficienza e/o gestione di scenari di inserimento/modifiche di tipo bulk.
+
+== Il nostro tocco...
+
+Analogamente a quanto fatto per le armature base (_"Controller"_) dei componenti *JSF*, abbiamo sviluppato un insieme di armature base (dette _"Repository"_) per gestire l'associazione dei Data Access Object (DAO) di tipo *EJB Stateless Session Bean* ai diversi tipo di dato, mappati come *EJB Entity Bean*. L'integrazione reciproca di tali componenti e' stata resa immediata grazie alle logiche portate a fattore comune dalle classi base di entrambi i tipi.
+
+L'utilizzo combinato dei nostri componenti di tipo _Repository_ e _Controller_ permette l'adozione di pattern di ricerca e filtraggio dei dati tali da permettere lo scambio efficace dei criteri di filtro tra pagine web, controller jsf e repository ejb. L'oggetto di ricerca contiene istanze di esempio del tipo di dato da cercare, con i vari campi valorizzabili direttamente dalle maschere, per ricerche di tipo match diretto e ricerca con range.
+L'uso di tale oggetto ricerca all'interno del repository può essere ricondotto a i criteria di *JPA2*, all'uso di query *EJBQL* o persino query native.
+
+In particolare, sono state portate a fattor comune la costruzione di query per l'uso di questo oggetto al fine di query di conteggio, query di selezione e raggruppamento (es: per reportistica o graficazione di valori).
+
+Ciascuno specifico componente di tipo Repository può infine ovviamente introdurre customizzazioni di tale meccanismo per gestire casistitiche quali uso di flag per ricerche di sottoinsiemi di dati, uso di query innestate, gestione di conversioni e/o semantiche di ricerca specifiche di un particolare oggetto.
+
+=== Gestione della Persistence Unit in uso
+
+Il componente generico, presente nelle librerie in uso in diversi progetti, prevede un metodo getter astratto, che utilizza al proprio interno per l'accesso all'effettivo gestore della persistenza.
+
+.AbstractRepository.java
+----
+public abstract class AbstractRepository<T> 
+{
+
+	protected abstract EntityManager getEm();
+
+	...
+}
+----
+
+In ciascuno specifico applicativo realizzato, e' presente
+un'unica classe (per ogni persistence unit), sempre generica e astratta, utilizzata per iniettare tale dipendenza estendendo l'armatura generica.
+
+.BaseRepository.java
+----
+public abstract class BaseRepository<T> extends AbstractRepository<T>
+{
+
+	@PersistenceContext(unitName = "actualPersistenceUnit")
+	protected EntityManager em;
+
+	@Override
+	protected EntityManager getEm()
+	{
+		return em;
+	}
+
+}
+----
+
+Le attuali classi _Repository_, realizzate ed utilizzate in accordo al pattern DAO, estendendono la classe base del proprio progetto e accedono al gestore della persistenza
+attraverso il metodo getter ereditato, laddove abbiano necessita' di sovrascrivere o aggiungere metodi all'armatura generica. 
+
+.OrderRepository.java
+----
+public abstract class OrderRepository extends BaseRepository<Order>
+{
+
+	@Override
+	public Order customMethod(String... params)
+	{
+		try 
+		{
+			return (Order) getEm().createQuery(... do something ...).getSingleResult();
+		}
+		catch ( Exception e ) 
+		{
+			logger.error(e.getMessage(),e);
+			return null;
+		}
+	}
+
+	...
+
+}
+----
+
+=== Logica C.R.U.D.
+
+L'armatura generica implementa i tipici metodi di creazione / lettura / modifica / eliminazione richiamati dal controller del tipo di dato corrispondente. 
+
+Laddove necessario, il comportamento preliminare o effettivo di ogni metodo puo' essere esteso o ridefinito dai Repository specifici di un particolare dato.
+
+.AbstractRepository.java
+----
+	...
+	   
+	@SuppressWarnings("unchecked")
+	protected Class<T> getEntityType()
+	{
+		ParameterizedType parameterizedType = (ParameterizedType) getClass()
+			.getGenericSuperclass();
+		return (Class<T>) parameterizedType.getActualTypeArguments()[0];
+	}
+
+	// CREATE
+
+	public T create(Class<T> domainClass)
+	{
+		try
+		{
+	      		return domainClass.newInstance();
+		}
+	      	catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return null;
+		}
+	}
+
+	public T persist(T object)
+	{
+		try
+		{
+	   		object = prePersist(object);
+			if (object != null)
+			{
+				getEm().persist(object);
+			}
+			return object;
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return null;
+		}
+	}
+
+	/**
+	* Override this if needed
+	*/
+	protected T prePersist(T object)
+	{
+		return object;
+	}
+
+	// READ
+
+	public T find(Object key)
+	{
+		try
+		{	
+			return getEm().find(getEntityType(), key);
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return null;
+		}
+	}
+
+
+	/**
+	* Override this if needed
+	*/
+	public T fetch(Object key)
+	{
+		try
+		{
+			return getEm().find(getEntityType(), key);
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return null;
+		}
+	}
+
+	// UPDATE
+
+	public boolean update(T object)
+	{
+		try
+		{
+			object = preUpdate(object);
+			getEm().merge(object);
+			return true;
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return false;
+		}
+	}
+
+	/**
+	* Override this if needed
+	*/
+	protected T preUpdate(T object)
+	{
+		return object;
+	}
+
+	// DELETE
+
+	public boolean delete(Object key)
+	{
+		try
+		{
+			T obj = getEm().find(getEntityType(), key);
+			obj = preDelete(obj);
+			if (obj != null)
+			{
+				getEm().remove(obj);
+			}
+			return true;
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return false;
+		}
+	}
+
+	/**
+	* Override this if needed
+	*/
+	protected T preDelete(T object)
+	{
+		return object;
+	}
+
+	...
+----
+
+Nel caso d'uso considerato, la gestione degli ordini puo' ad esempio richiedere una cancellazione di tipo solamente logico, realizzata impostando un apposito flag anziche' eliminando realmente il dato.
+
+La visualizzazione di un ordine puo' invece richiedere il caricamento degli articoli associati.
+
+.OrderRepository
+----
+	...
+
+	@Override
+	protected Order preDelete(Order order) {
+		order.setActive(false);
+	}
+
+	@Override
+	public boolean delete(Object key) {
+		try
+		{
+			Order order = find(key);
+			order = preDelete(order);
+			return update(order);
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return false;
+		}
+	}
+
+	...
+
+	@Override
+	public Order fetch(Object key)
+	{
+		try
+		{
+			return getEm().createQuery("select o from " + Order.class.getSimpleName() + " o left join fetch o.items i where o.id = :ID).setParameter("ID",key).getSingleResult();
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return null;
+		}
+	}
+
+	...
+----
+
+Il _Controller_ dedicato agli ordini puo' infine avvalersi delle logiche dell'armatura base di tipo _Repository_ in fase di creazione, rilettura o modifica di un ordine. 
+
+Grazie all'utilizzo dei tipi generici, anche tali operazioni possono essere implementate nell'armatura base di tale _Controller_, demandando alla specifica implementazione la sola iniezione
+del _Repository_ utilizzato.
+
+.OrderController.java
+----
+	...
+
+	@Inject
+	@OwnRepository(OrderRepository.class)
+	OrderRepository orderRepository;
+
+	...
+----
+
+.AbstractLazyController.java
+----
+	...
+
+	private Class<T> entityClass;
+
+	public String addElement()
+	{
+		this.element = getRepository().create(entityClass);
+		...
+		return editPage();
+	}
+
+	public String save()
+	{
+		try
+		{
+			// eventuale recupero e preelaborazioni dati in input nelle sottoclassi che estendono l'armatura
+			preSave();
+			// salvataggio
+			setElement(getRepository().persist(getElement()));
+			setElement(getRepository().fetch(getId(getElement())));
+			// refresh locale
+			...
+			refreshModel();
+			resetEvent.fire(new ResetEvent(getClassType()));
+			return viewPage();
+		}
+		catch (Exception exc)
+		{
+			return editPageNoRedirect();
+		}
+	}
+
+	/**
+	* Override this if needed
+	*/
+	protected void preSave() throws Exception { }
+
+	...
+
+	public String update()
+	{
+		try
+		{
+			// eventuale recupero e preelaborazioni dati in input nelle sottoclassi che estendono l'armatura
+			preUpdate();
+			// salvataggio
+			getRepository().update(getElement());
+			// refresh locale
+			setElement(getRepository().fetch(getId(getElement())));
+			...
+			refreshModel();
+			resetEvent.fire(new ResetEvent(getClassType()));
+			return viewPage();
+		}
+		catch (Exception exc)
+		{
+			return editPageNoRedirect();
+		}
+	}
+
+	/**
+	* Override this if needed
+	*/
+	protected void preUpdate() throws Exception { }
+
+	...
+----
+
+Per ottenere tale risultato, l'armatura _Controller_ generica fornisce inoltre numerosi metodi di utilita' per l'accesso al repository e alle caratteristiche del tipo di dato tratto, quali quelli di seguito riportati.
+
+.AbstractLazyController.java
+----
+	...
+
+	private Repository<T> repository;
+
+	public Repository<T> getRepository()
+	{
+		return repository;
+	}
+
+	@PostConstruct
+	private void init()
+	{
+		injectRepositoryAndPages();
+		...
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void injectRepositoryAndPages()
+	{
+		Field[] fields = getClass().getDeclaredFields();
+		for (Field field : fields)
+		{
+			try
+			{
+				// recupero dei campi annotati con le nostre annotazioni
+				...
+				OwnRepository repository_anno = field.getAnnotation(OwnRepository.class);
+				...
+				if (repository_anno != null)
+				{
+					Class clazz = repository_anno.value();
+					this.repository = (Repository<T>) BeanUtils.getBean(clazz);
+				}
+			}
+			catch (Exception e)
+			{
+				logger.error(e.getMessage(),e);
+				e.printStackTrace();
+			}
+		}
+	}
+
+	...
+
+	/**
+	 * Override this if needed
+	 */
+	public Object getId(T t)
+	{
+		try
+		{
+			Field f = t.getClass().getDeclaredField("id");
+			f.setAccessible(true);
+			return f.get(t);
+		}
+		catch (Exception e)
+		{	
+			// never happens
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+----
+
+=== Logica di ricerca
+
+L'armatura generica, implementa i meccanismi basi per permettere un'efficiente ricerca filtrata in base ai campi di un oggetto di esempio _Search_.
+
+.Search.java
+----
+public class Search<T> implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+
+	private Class<T> classType;
+
+	// --------- Templating ----------------------------------------
+
+	private T obj;
+	private T from;
+	private T to;
+	private T like;
+
+	// --------- Ordering ----------------------------------------
+
+	private String defaultOrder;
+	private String order;
+	private boolean orderAsc = true;
+
+	public Search(Class<T> t) {
+		classType = t;
+		this.obj = init(t);
+		this.from = init(t);
+		this.to = init(t);
+	}
+
+	private T init(Class<T> t) {
+		try {
+			return t.newInstance();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+			return null;
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	// getters and setters
+	...
+----
+
+L'oggetto _Search_ generico appena descritto viene valorizzato secondo necessita'.
+
+Ad esempio, tramite i campi di input dell'interfaccia web e il _Controller_ del relativo tipo di dato.
+
+.list.xhtml
+----
+	...
+
+	<ui:define name="content">
+
+		<h:form id="mainForm">
+
+			...
+
+			<h:outputLabel value="identificativo:"
+				for="identifier" />
+			<h:inputText id="identifier" value="#{orderController.search.obj.id}" />
+
+			<h:outputLabel for="dal" value="dal:" />
+			<p:calendar id="dal" 
+				value="#{orderController.search.from.data}"
+				title="Data dal" pattern="dd/MM/yyyy HH:mm" locale="it"
+				startWeekday="1" showOn="button" />
+
+			...
+----
+
+Inoltre, come gia' accennato nel post precedent, nel caso della ricerca a partire da interfaccia web il criterio di ricerca _Search_ viene inizializzato nella specifica classe _Controller_ di ogni tipo di dato tenendo conto della profilazione dell'utente corrente.
+
+.OrderController.java
+----
+	...
+	
+	@Inject
+	LoginController loginController;
+
+	@Override
+	public void defaultCriteria()
+	{
+		getSearch().getObj().setUser(loginController.getUser().getId());
+		getSearch().getFrom().setData(ultimi6mesi());
+	}
+
+}
+----
+
+La creazione vera e propria dell'oggetto _Search_ avviene invece nell'armatura generica di tutti i _Controller_; i risultati della ricerca sono altresi' messi a disposizione da tale armatura tramite un oggetto JSF di tipo _DataModel_ (nel caso mostrato, realizzato sulla base delle API di PrimeFaces, al fine di gestire la paginazione dei risultati). 
+
+.AbstractLazyController.java
+----
+	...
+
+	private Class<T> entityClass;
+
+	private Search<T> search;
+
+	/**
+	 * Extending classes can only access and modify, not re-assign from scratch
+	 */ 
+	public Search<T> getSearch()
+	{
+		return this.search;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public AbstractLazyController()
+	{
+		this.entityClass = getClassType();
+		// defaultCriteria();
+		search = new Search(this.entityClass);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Class<T> getClassType()
+	{
+		Class clazz = getClass();
+		while (!(clazz.getGenericSuperclass() instanceof ParameterizedType))
+		{
+			clazz = clazz.getSuperclass();
+		}
+		ParameterizedType parameterizedType = (ParameterizedType) clazz
+		       .getGenericSuperclass();
+		return (Class<T>) parameterizedType.getActualTypeArguments()[0];
+	}
+
+	...
+
+	private LocalLazyDataModel<T> model;
+
+	public LocalLazyDataModel<T> getModel()
+	{
+		if (model == null) {
+			refreshModel();
+		}
+		return model;
+	}
+
+	public void setModel(LocalLazyDataModel<T> model)
+	{
+		this.model = model;
+	}
+
+	public void refreshModel()
+	{
+		setModel(new LocalLazyDataModel<T>(search, getRepository()));
+	}
+
+	...
+----
+
+Laddove, la specifica implementazione del DataModel (in questo caso rispondente alle API previste da PrimeFaces), prevede la seguente struttura:
+
+.LocalLazyDataModel.java
+----
+public class LocalLazyDataModel<T> extends LazyDataModel<T> implements
+         Serializable
+{
+
+	private static final long serialVersionUID = 1L;
+
+	private List<T> list;
+	private Search<T> search;
+	private Repository<T> repository;
+	
+	...
+
+	public LocalLazyDataModel(Search<T> search, Repository<T> repository)
+	{
+		super();
+
+		setRowCount(repository.getListSize(search));
+
+		this.search = search;
+		this.repository = repository;
+	}
+
+	...
+
+	public List<T> load(int first, int pageSize, String sortField,
+	boolean sortOrder, Map<String, String> filters)
+	{
+		List<T> data = null;
+		if (sortField != null && sortField.trim().length() > 0)
+		{
+			search.setOrder(sortField);
+		}
+		search.setOrderAsc(sortOrder);
+		data = repository.getList(search, first, pageSize);
+		...
+		}
+		return data;
+	}
+
+	...
+----
+
+L'armatura generica di tipo _Repository_ implementa la logica di ricerca e filtraggio. Nel nostro caso, per praticita' di utilizzo, si e' scelto di rendere disponibile sia una implementazione tramite query EJBQL che mediante criteri JPA2.
+Nel seguito, viene riportata la prima.
+
+.AbstractRepository.java
+----
+	@SuppressWarnings("unchecked")
+	public List<T> getList(Search<T> ricerca, int startRow, int pageSize)
+	{
+		try
+		{
+			List<T> result = null;
+			boolean count = false;
+			Query res = getRestrictions(ricerca, count);
+			if (res == null) {
+				return result;
+			}
+			if (startRow >= 0)
+			{
+				res.setFirstResult(startRow);
+			}
+			if (pageSize > 0)
+			{
+				res.setMaxResults(pageSize);
+			}
+			result = (List<T>) res.getResultList();
+			return result == null ? new ArrayList<T>() : result;
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage(), e);
+			return new ArrayList<T>();
+		}
+	}
+
+	public int getListSize(Search<T> ricerca)
+	{
+		try
+		{
+			Long result = new Long(0);
+			boolean count = true;
+			Query res = getRestrictions(ricerca, count);
+			if ((res != null))
+			{
+				result = (Long) res.getSingleResult();
+			}
+			return result == null ? 0 : result.intValue();
+		}
+		catch (Exception e)
+		{
+			logger.error(e.getMessage());
+			return 0;
+		}
+	}
+
+	...
+
+	protected Query getRestrictions(Search<T> search, boolean justCount)
+	{
+		Map<String, Object> params = new HashMap<String, Object>();
+
+		String alias = "c";
+		StringBuffer sb = new StringBuffer(getBaseList(search.getObj().getClass(), alias, justCount));
+		String separator = " where ";
+
+		applyRestrictions(search, alias, separator, sb, params);
+
+		if (!justCount)
+		{
+			sb.append(getOrderBy(alias, search.getOrder()));
+		}
+
+		Query q = getEm().createQuery(sb.toString());
+		for (String param : params.keySet())
+		{
+			q.setParameter(param, params.get(param));
+		}
+
+		return q;
+	}
+
+	protected String getBaseList(Class<? extends Object> clazz, String alias, boolean count)
+	{
+		if (count)
+		{
+			return "select count(" + alias + ") from " + clazz.getSimpleName()
+			+ " " + alias + " ";
+		}
+		else
+		{
+			return "select " + alias + " from " + clazz.getSimpleName() + " "
+			+ alias + " ";
+		}
+	}
+
+	protected void applyRestrictions(Search<T> search, String alias,
+	    String separator, StringBuffer sb, Map<String, Object> params)
+	{
+	}
+
+	...	
+----
+
+Ogni specifico _Repository_ puo' infine arricchire i criteri di filtro, in base a quanto richiesto dall'applicazione.
+
+.OrderRepository.java
+----
+	...
+
+	@Override
+	protected void applyRestrictions(Search<SentFax> search, String alias, 
+		String separator, StringBuffer sb, Map<String, Object> params) 
+	{
+
+		...
+
+		if (search.getFrom() != null && search.getFrom().getData() != null)
+		{
+			sb.append(separator).append(alias).append(".data >= :START_FROM ");
+			params.put("START_FROM", search.getFrom().getStartDate());
+			separator = " and ";
+		}
+
+		...
+      }
+----
+
+Tale meccanismo permette con semplicita' di realizzare politiche di filtro anche complesse e articolate.
+
+Ad esempio, per mostrare a un operatore-supervisore abilitato a operare in piu' filiali
+ tutti gli ordini gestiti da lui stesso e dagli operatori a lui sottoposti in tali filiali, 
+insieme ai soli ordini associati alla filiale principale e da lui direttamente gestiti...
+
+.OrderReportController.java
+----
+	...
+	
+	@Inject
+	LoginController loginController;
+
+	@Override
+	public void defaultCriteria()
+	{
+		// campi transienti
+		getSearch().getObj().setSearchForOperators(loginController.getManagedOperators());
+		getSearch().getObj().setSearchForDepartments(loginController.getManagedDepartments());
+	}
+
+}
+----
+.OrderRepository.java
+----
+	...
+
+	@Override
+	protected void applyRestrictions(Search<SentFax> search, String alias, 
+		String separator, StringBuffer sb, Map<String, Object> params) 
+	{
+
+		...
+
+		if (search.getObj().getSearchForOperators() != null && search.getObj().getSearchForOperators().size() > 0)
+		{
+			sb.append(separator).append(alias).append(".operator in ( :OPERATORS ) ");
+			params.put("OPERATORS", search.getObj().getRicercaOperators());
+			separator = " and ";
+		}
+
+		// ACCOUNTS
+		if (search.getObj().getSearchForDepartments() != null && search.getObj().getSearchForDepartments.size() > 0)
+		{
+			List<Long> depIds = new ArrayList<Long>();
+			for ( Department department : search.getObj().getSearchForDepartments() ) {
+				depIds.add(department.getId());
+			}
+
+			sb.append(separator).append(" ( ");
+
+			sb.append(" ( ").append(alias).append(".deparment.id in ( :DEP_IDS ) ) ");
+
+			sb.append(" or ");
+
+			sb.append(" ( ").append(alias).append(".department.defaultDepartment = :DEFAULT_DEP ");
+			sb.append(" and ")
+			     .append(alias).append(".operator = :DEFAULT_OPERATOR ");
+			sb.append(" ) ");
+
+			sb.append(" ) ");
+
+			params.put("DEP_IDS", depIds);
+			params.put("DEFAULT_DEP", true);
+			params.put("DEFAULT_OPERATOR", ctx.getCallerPrincipal().getName());
+
+			separator = " and ";
+
+		}
+
+		...
+      }
+----
+

@@ -161,10 +161,6 @@ Esempio: aggiornamento degli elenchi e delle opzioni visualizzate da altri compo
 
 .UpdateEvent.java
 ----
-/**
-* Classe generica che implementa l'evento di update
-* portando con se' l'oggetto appena modificato
-*/
 public class UpdatedEvent<T>
 {
 	protected T obj;
@@ -200,10 +196,6 @@ public class UpdatedEvent<T>
 
 .AbstractProducer.java
 ----
-/**
-* Classe che mantiene liste generiche di opzioni richiamate dalle pagine xhtml
-* e le resetta automaticamente in caso di eventi di creazione, modifica, eliminazione..
-*/
 public abstract class AbstractProducer implements Serializable
 {
 
@@ -256,9 +248,6 @@ public abstract class AbstractProducer implements Serializable
 ----
 .PropertiesProducer.java
 ----
-/**
-* Classe che realizza la ricerca e la valorizzazione degli elementi delle liste di opzioni
-*/
 @Named
 @SessionScoped
 public class PropertiesProducer extends AbstractProducer implements Serializable

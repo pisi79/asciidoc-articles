@@ -44,15 +44,13 @@ Il meccanismo di verifica previsto dal template Facelets viene valutato prima di
 		xmlns:h="http://java.sun.com/jsf/html"
 		xmlns:f="http://java.sun.com/jsf/core"
 		xmlns:c="http://java.sun.com/jsp/jstl/core"
-		xmlns:p="http://primefaces.org/ui" 
-		...
-	>
+		xmlns:p="http://primefaces.org/ui" ...>
 
 		<ui:define name="roles">
 			<f:attribute name="roles" value="ORDER_EDIT" />
 		</ui:define>
 
-		...
+	...
 ----
 
 === Verifica dei permessi dell'utente corrente alla visione e/o utilizzo di specifici controlli e sezioni della pagina
@@ -61,13 +59,9 @@ Ciascun componente può subordinare la propria visualizzazione a una o più ACL 
 
 .page.xhtml
 ----
-		...
-
 		<h:form rendered="#{perm:permit('ORDER_ADD')}" id="addForm">
 			...
 		</h:form>
-
-		...
 ----
 endif::[]
 
@@ -77,41 +71,29 @@ Per permettere la navigazione tra maschere tramite link *HTML*:
 
 .template.xhtml
 ----
-		...
-
 	 	<ui:insert name="params">	
 	 	</ui:insert>
-
-		...
 ----
 
 .page.xhtml
 ----
-		...
-
 		<ui:define name="params">
 			<f:metadata>
 				<f:viewParam name="deviceId"
 					value="#{deviceController.search.obj.deviceId}" />
 			</f:metadata>
 		</ui:define>
-
-		...
 ----
 
 Per permettere la creazione di URL bookmarkabili, quali i link inseribili in comunicazioni via mail e cliccabili per accedere direttamente al dato di interesse:
 
 .pretty-config.xml
 ----
-	...
-
 	<url-mapping id="orderView">
 		<pattern value="/gestore-ordini/vedi-ordine/#	{orderController.element.id}" />
 		<action>#{orderController.viewCurrent}</action>
 		<view-id>/ordini/dettaglio.jsf</view-id>
 	</url-mapping>
-
-	...
 ----
 
 .mail.eml
@@ -129,26 +111,19 @@ Per permettere la navigazione diretta tra pagine Web dell'applicazione mediante 
 
 .page.xhtml
 ----
-		...
-
 		<ui:define name="params">
 			<f:metadata>
 				<f:viewParam name="orderId"
 					value="#{orderController.search.obj.id}" />
 			</f:metadata>
 		</ui:define>
-
-		...
 ----
 
 In funzione di tali parametri e/o delle ACL soddisfatte dall'utente, possono poi essere indicati da ciascuna maschera eventuali pattern di navigazione alternativi verso cui redirigere la richiesta corrente)
 
 .page.xhtml
 ----
-	<ui:composition ...
-		xmlns:perm="http://www.ict-group.it/commons2/permissions" 
-		... 
-	>
+	<ui:composition xmlns:perm="http://www.ict-group.it/commons2/permissions" ... >
 
 		<perm:loadPage acl="ORDER_VIEW" to="oops.jsf?code=402" />
 		
@@ -161,6 +136,7 @@ Il layout specifica una area di visualizzazione dei messaggi di notifica ed erro
 
 .template.xhtml
 ----
+
 	<f:view ... 
 		xmlns:p="http://primefaces.org/ui" 
 		...
@@ -198,8 +174,6 @@ In caso di specifiche tipologie di azioni o di latenza nella risposta del server
 
 .template.xhtml
 ----
-		...
-
 		<ui:insert name="modalWait">
 			<p:ajaxStatus onstart="statusDialog.show();"
 				onsuccess="statusDialog.hide();" id="ajaxStatusPanel">
@@ -210,8 +184,6 @@ In caso di specifiche tipologie di azioni o di latenza nella risposta del server
 				</f:facet>
 			</p:ajaxStatus>
 		</ui:insert>
-
-		...
 ----
 
 === Verifica della presenza di dati nei campi di input prima di abbandonare la pagina corrente
@@ -220,8 +192,6 @@ Vengono intercettate le navigazioni in uscita dalla pagina, effettuate sul brows
 
 .template.xhtml
 ----
-		...
-
 		<ui:insert name="dirty-check">
 			<script type="text/javascript">
 				$(function() {
@@ -244,21 +214,15 @@ Vengono intercettate le navigazioni in uscita dalla pagina, effettuate sul brows
 				}
 			</script>
 		</ui:insert>
-
-		...
 ----
 
 Ciascuna maschera/pagina web puo' poi escludere tale comportamente semplicemente ridefinendo la sezione +dirty-check+ del template:
 
 .page.xhtml
 ----
-		...
-
 		<ui:define name="dirty-check">
 			<!-- skip dirty checking -->
 		</ui:insert>
-
-		...
 ----
 
 === Gestione della scadenza della sessione utente corrente
@@ -267,8 +231,6 @@ Gestione della scadenza della sessione utente corrente e dell'avviso dell'avvici
 
 .template.xhtml
 ----
-		...
-
 		<ui:insert name="sessiontimeout">
 			<p:idleMonitor timeout="108000" onidle="idleDialog.show();"
 				onactive="idleDialog.hide();" />
@@ -278,8 +240,6 @@ Gestione della scadenza della sessione utente corrente e dell'avviso dell'avvici
 					value="Sei ancora al monitor? Salva per evitare di perdere il tuo lavoro!" />
 			</p:dialog>
 		</ui:insert>
-
-		...
 ----
 
 === Correttezza del comportamento cross-browser delle maschere
@@ -325,6 +285,7 @@ La parte iniziale del template gestisce la corretta dichiarazione del DOCTYPE e 
 				<h:outputText escape="false" value="&lt;!--[if IE 7 ]&gt; &lt;link rel='stylesheet' href='assets/css/font-awesome-ie7.min.css' &gt; &lt;![endif]--&gt;" />
 
 				...
+
 ----
 
 

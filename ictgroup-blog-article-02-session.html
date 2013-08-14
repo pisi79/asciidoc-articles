@@ -742,12 +742,13 @@ asciidoc.install();
 <div class="sectionbody">
 <div class="paragraph"><p>L&#8217;implementazione della logica server-side dietro alle maschere applicative avviene mediante componenti <strong>CDI</strong> e backing bean <strong>JSF</strong>.</p></div>
 <div class="paragraph"><p>La gestione delle interazioni reciproche di tali componenti è ottenuta con tecniche di inversione del controllo basate su <em>iniezione delle dipendenze</em> (non è il componente che ha bisogno di un altro a richiamarlo, ma il container in cui entrambi eseguono che “inietta” nel primo il riferimento al secondo) ed <em>eventi</em> (il componente che esegue un&#8217;operazione non notifica direttamente tutti gli altri componenti interessati, ma si limita a generare un evento alla cui gestione si registrano gli altri componenti, per poter poi provvedere autonomamente).</p></div>
+<div class="paragraph"><p>Il tempo di vita dei singoli componenti fa riferimento agli scope definiti da <strong>CDI</strong> al fine di poter corrispondere, secondo necessita', alla singola richiesta emessa dal browser, alla vita della pagina correntemente visualizzata dall&#8217;utente, all&#8217;intera sua sessione di utilizzo dell&#8217;applicativo o di una sua parte (conversazione), o infine alla vita dell&#8217;applicativo stesso.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_il_nostro_tocco_8230">Il nostro tocco&#8230;</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Tramite l&#8217;uso dei tipi generici introdotti a partire da Java 5 e la definizione di nuove annotazioni (es: <tt>@OwnRepository</tt>, <tt>@ViewPage</tt>, &#8230;), in ICT-Group abbiamo sviluppato un insieme di armature base per diversi tipi di componenti (con tempo di vita di richiesta, di sessione, con necessità di disegnare grafici, scheduling, ecc..), dette genericamente <em>“Controller”</em>, allo scopo di portare a fattor comune gli aspetti di seguito descritti.</p></div>
+<div class="paragraph"><p>Tramite l&#8217;uso dei tipi generici introdotti a partire da Java 5 e la definizione di nuove annotazioni (es: <tt>@OwnRepository</tt>, <tt>@ViewPage</tt>, &#8230;), abbiamo sviluppato un insieme di armature base per diversi tipi di componenti (con tempo di vita di richiesta, di sessione, con necessità di disegnare grafici, scheduling, ecc..), dette genericamente <em>“Controller”</em>, allo scopo di portare a fattor comune gli aspetti di seguito descritti.</p></div>
 <div class="sect2">
 <h3 id="_associazione_di_uno_specifico_componente_jsf_detto_em_controller_em_con_il_corrispondente_tipo_di_dato_da_esso_gestito">Associazione di uno specifico componente JSF (detto <em>"Controller"</em>) con il corrispondente tipo di dato da esso gestito</h3>
 <div class="paragraph"><p>Il componente finale si limita a dichiarare tale tipo e può introdurre, se necessario, logiche custom di accesso alle diverse parti del dato, sovrascrivendo la logica dell&#8217;armatura base</p></div>
@@ -774,7 +775,6 @@ public class OrderController extends AbstractLazyController&lt;Order&gt;
 <div class="title">AbstractLazyController.java</div>
 <div class="content">
 <pre><tt>        ...
-        public static final String REDIRECT_PARAM = "?faces-redirect=true";
 
         @PostConstruct
         public void init() {
@@ -785,6 +785,10 @@ public class OrderController extends AbstractLazyController&lt;Order&gt;
         private T element;
         private LocalLazyDataModel&lt;T&gt; model;
 
+        /**
+        * Navigazione verso la scheda in sola lettura del dato
+        * attualmente presente nel campo 'element' del controller
+        */
         public String viewCurrent() {
                 // fetch dei dati
                 element = getRepository().fetch(getId(element));
@@ -793,11 +797,21 @@ public class OrderController extends AbstractLazyController&lt;Order&gt;
                 return viewPage();
         }
 
+        /**
+        * Navigazione verso la pagina di modifica del dato
+        * attualmente presente nel campo 'element' del controller
+        */
         public String modCurrent() {
+                // fetch dei dati
+                element = getRepository().fetch(getId(element));
                 ...
+                // vista di arrivo
                 return editPage();
         }
 
+        /**
+        * Salvataggio delle modifiche sul dato
+        */
         public String update() {
                 try {
                         ...
@@ -844,7 +858,6 @@ public class OrderController extends AbstractLazyController&lt;Order&gt;
 <div class="title">AbstractLazyController.java</div>
 <div class="content">
 <pre><tt>        ...
-        public static final String REDIRECT_PARAM = "?faces-redirect=true";
 
         @PostConstruct
         public void init() {
@@ -887,7 +900,11 @@ public class OrderController extends AbstractLazyController&lt;Order&gt;
 <div class="listingblock">
 <div class="title">UpdateEvent.java</div>
 <div class="content">
-<pre><tt>public class UpdatedEvent&lt;T&gt;
+<pre><tt>/**
+* Classe generica che implementa l'evento di update
+* portando con se' l'oggetto appena modificato
+*/
+public class UpdatedEvent&lt;T&gt;
 {
         protected T obj;
 
@@ -899,42 +916,6 @@ public class OrderController extends AbstractLazyController&lt;Order&gt;
         }
 
 }</tt></pre>
-</div></div>
-<div class="listingblock">
-<div class="title">PropertiesProducer.java</div>
-<div class="content">
-<pre><tt>        ...
-        @Inject
-        TipologieProdottiRepository tipologieProdottiRepository;
-
-        @SuppressWarnings("rawtypes")
-        private Map&lt;Class, SelectItem[]&gt; items = new HashMap&lt;Class,SelectItem[]&gt;();
-
-        @Produces
-        @Named
-        public SelectItem[] getTipologieProdottiItems() {
-                Search&lt;TipologiaProdotto&gt; search = new Search&lt;TipologiaProdotto&gt;(TipologiaProdotto.class);
-                search.getObj().setFavourtes(loginController.getUser().getFavourites());
-                return checkItems(search, tipologieProdottiRepository, "id", "nome",
-                                "nessuna tipologia disponibile", "tipologia...");
-        }
-
-        private SelectItem[] checkItems(Search&lt;T&gt; searcg, Repository&lt;T&gt; ejb,
-                        String idField, String valueField, String emptyMessage,
-                        String labelMessage) {
-                Class clazz = search.getObj().getClass();
-                if (items.get(clazz) == null || items.get(clazz).length == 0) {
-                        items.put(clazz, setupItems(search, ejb, idField,
-                                        valueField, emptyMessage, labelMessage));
-                }
-                return items.get(clazz);
-        }
-
-        @Override
-        public void observeUpdate(@Observes UpdatedEvent updatedEvent)
-        {
-                items.put(updatedEvent.getObj().getClass(),null);
-        }</tt></pre>
 </div></div>
 <div class="listingblock">
 <div class="title">AbstractLazyController.java</div>
@@ -956,6 +937,88 @@ public class OrderController extends AbstractLazyController&lt;Order&gt;
         }</tt></pre>
 </div></div>
 <div class="listingblock">
+<div class="title">AbstractProducer.java</div>
+<div class="content">
+<pre><tt>/**
+* Classe che mantiene liste generiche di opzioni richiamate dalle pagine xhtml
+* e le resetta automaticamente in caso di eventi di creazione, modifica, eliminazione..
+*/
+public abstract class AbstractProducer implements Serializable
+{
+
+        @SuppressWarnings("rawtypes")
+        protected Map&lt;Class, SelectItem[]&gt; items = null;
+
+        @SuppressWarnings("rawtypes")
+        @PostConstruct
+        public void reset()
+        {
+                items = new HashMap&lt;Class, SelectItem[]&gt;();
+        }
+
+        @SuppressWarnings("rawtypes")
+        public void resetItemsForClass(Class clazz)
+        {
+                if (items.containsKey(clazz))
+                {
+                        items.remove(clazz);
+                }
+        }
+
+        public void observeReset(@Observes ResetEvent resetEvent)
+        {
+                if (resetEvent != null &amp;&amp; resetEvent.getObservedClass() != null)
+                {
+                        resetItemsForClass(resetEvent.getObservedClass());
+                }
+                else
+                {
+                        this.reset();
+                }
+        }
+
+        protected SelectItem[] checkItems(Search&lt;T&gt; searcg, Repository&lt;T&gt; ejb,
+                        String idField, String valueField, String emptyMessage,
+                        String labelMessage) {
+                Class clazz = search.getObj().getClass();
+                if (items.get(clazz) == null || items.get(clazz).length == 0) {
+                        items.put(clazz, setupItems(search, ejb, idField,
+                                        valueField, emptyMessage, labelMessage));
+                }
+                return items.get(clazz);
+        }
+
+
+   ...
+
+}</tt></pre>
+</div></div>
+<div class="listingblock">
+<div class="title">PropertiesProducer.java</div>
+<div class="content">
+<pre><tt>/**
+* Classe che realizza la ricerca e la valorizzazione degli elementi delle liste di opzioni
+*/
+@Named
+@SessionScoped
+public class PropertiesProducer extends AbstractProducer implements Serializable
+{
+
+        ...
+
+        @Inject
+        TipologieProdottiRepository tipologieProdottiRepository;
+
+        @Produces
+        @Named
+        public SelectItem[] getTipologieProdottiItems() {
+                Search&lt;TipologiaProdotto&gt; search = new Search&lt;TipologiaProdotto&gt;(TipologiaProdotto.class);
+                search.getObj().setFavourtes(loginController.getUser().getFavourites());
+                return checkItems(search, tipologieProdottiRepository, "id", "nome",
+                                "nessuna tipologia disponibile", "tipologia...");
+        }</tt></pre>
+</div></div>
+<div class="listingblock">
 <div class="title">OrderController.java</div>
 <div class="content">
 <pre><tt>        // niente da implementare</tt></pre>
@@ -967,7 +1030,7 @@ public class OrderController extends AbstractLazyController&lt;Order&gt;
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-06-24 09:08:41 CEST
+Last updated 2013-08-09 09:31:07 CEST
 </div>
 </div>
 </body>
